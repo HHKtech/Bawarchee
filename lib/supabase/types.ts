@@ -8,6 +8,7 @@ export type CatalogItem = {
 };
 
 export type InventoryAddedVia = 'search' | 'receipt' | 'manual';
+export type ReceiptScanStatus = 'pending' | 'confirmed' | 'discarded';
 
 export type InventoryItem = {
   id: string;
@@ -19,6 +20,25 @@ export type InventoryItem = {
   unit: string;
   added_via: InventoryAddedVia | null;
   updated_at: string;
+};
+
+export type ReceiptScan = {
+  id: string;
+  user_id: string;
+  image_url: string;
+  status: ReceiptScanStatus;
+  created_at: string;
+};
+
+export type ReceiptScanItem = {
+  id: string;
+  scan_id: string;
+  raw_text: string;
+  matched_catalog_item_id: string | null;
+  matched_item_name: string | null;
+  quantity: number;
+  unit: string;
+  confirmed: boolean;
 };
 
 export type Profile = {
@@ -95,6 +115,33 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Omit<InventoryItem, 'id' | 'user_id'>>;
+        Relationships: [];
+      };
+      receipt_scans: {
+        Row: ReceiptScan;
+        Insert: {
+          id?: string;
+          user_id?: string;
+          image_url: string;
+          status?: ReceiptScanStatus;
+          created_at?: string;
+        };
+        Update: Partial<Omit<ReceiptScan, 'id' | 'user_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      receipt_scan_items: {
+        Row: ReceiptScanItem;
+        Insert: {
+          id?: string;
+          scan_id: string;
+          raw_text: string;
+          matched_catalog_item_id?: string | null;
+          matched_item_name?: string | null;
+          quantity?: number;
+          unit?: string;
+          confirmed?: boolean;
+        };
+        Update: Partial<Omit<ReceiptScanItem, 'id' | 'scan_id'>>;
         Relationships: [];
       };
     };

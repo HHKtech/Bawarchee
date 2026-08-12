@@ -2,7 +2,7 @@
 
 Bawarchee is a fresh-start Next.js 14 App Router application for intelligent household pantry inventory and conversational recipe assistance.
 
-This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, **Module 3: Item Catalog & Search Module**, and **Module 4: Inventory Module**.
+This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, **Module 3: Item Catalog & Search Module**, **Module 4: Inventory Module**, and **Module 5 Phase 1: Receipt Scanner foundation**.
 
 ## Implemented in Module 1
 
@@ -50,6 +50,13 @@ This repository currently implements **Module 1: Auth Module**, **Module 2: Prof
 - Reusable `components/inventory/AddItemModal.tsx` that embeds the existing `CatalogSearch` component and posts selected catalog items with quantities.
 - `components/inventory/InventoryPanel.tsx` on `/dashboard` with grouped inventory categories, multi-select checkboxes, inline quantity editing, delete actions, and a Module 5 receipt-scan placeholder.
 
+## Implemented in Module 5 Phase 1
+
+- Added `receipt_scans` and `receipt_scan_items` Supabase schema with authenticated user-owned RLS policies.
+- Added private `receipts` Supabase Storage bucket setup notes/policies for per-user receipt image paths.
+- Added typed receipt scan records in `lib/supabase/types.ts`.
+- Added `extractItemsFromReceipt(imageBuffer, mimeType)` in `lib/gemini.ts` using Gemini 1.5 Flash vision to return structured receipt line items.
+
 ## Prerequisites
 
 - Node.js 18.17+ recommended.
@@ -64,10 +71,10 @@ Copy `.env.local.example` to `.env.local` and fill in real values:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-key-for-later-modules
+GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-key-for-receipt-extraction
 ```
 
-`GOOGLE_GENERATIVE_AI_API_KEY` is included now because later modules use Gemini 1.5 Flash, but Modules 1-4 do not call Gemini.
+`GOOGLE_GENERATIVE_AI_API_KEY` is required by the Module 5 Phase 1 Gemini receipt extraction helper. The Phase 2 UI/API will call this helper.
 
 ## Supabase setup
 
@@ -77,7 +84,10 @@ Run the SQL in `supabase/schema.sql` in your Supabase SQL editor. It creates:
 - `public.family_members`
 - `public.catalog_items`
 - `public.inventory_items`
-- Row Level Security policies for user-owned profile/family/inventory access and public read-only catalog access
+- `public.receipt_scans`
+- `public.receipt_scan_items`
+- Private `receipts` Supabase Storage bucket policies using per-user object paths
+- Row Level Security policies for user-owned profile/family/inventory/receipt access and public read-only catalog access
 - `public.handle_new_user()` trigger function
 - `on_auth_user_created` trigger on `auth.users`
 
@@ -110,7 +120,7 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Profile & Family Setup Module — complete
 3. Item Catalog & Search Module — complete
 4. Inventory Module — complete
-5. Receipt Scanner Module — next
+5. Receipt Scanner Module — Phase 1 complete; Phase 2 receipt scanner API/UI next
 6. Dashboard Layout Module
 7. Recipe Generation Module
 8. AI Chat Module
