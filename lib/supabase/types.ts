@@ -7,6 +7,20 @@ export type CatalogItem = {
   default_unit: string;
 };
 
+export type InventoryAddedVia = 'search' | 'receipt' | 'manual';
+
+export type InventoryItem = {
+  id: string;
+  user_id: string;
+  catalog_item_id: string | null;
+  item_name: string;
+  category: string | null;
+  quantity: number;
+  unit: string;
+  added_via: InventoryAddedVia | null;
+  updated_at: string;
+};
+
 export type Profile = {
   id: string;
   is_onboarded: boolean;
@@ -65,6 +79,22 @@ export type Database = {
           default_unit: string;
         };
         Update: Partial<Omit<CatalogItem, 'id'>>;
+        Relationships: [];
+      };
+      inventory_items: {
+        Row: InventoryItem;
+        Insert: {
+          id?: string;
+          user_id?: string;
+          catalog_item_id?: string | null;
+          item_name: string;
+          category?: string | null;
+          quantity: number;
+          unit: string;
+          added_via?: InventoryAddedVia | null;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<InventoryItem, 'id' | 'user_id'>>;
         Relationships: [];
       };
     };

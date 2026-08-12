@@ -2,7 +2,7 @@
 
 Bawarchee is a fresh-start Next.js 14 App Router application for intelligent household pantry inventory and conversational recipe assistance.
 
-This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, and **Module 3: Item Catalog & Search Module**.
+This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, **Module 3: Item Catalog & Search Module**, and **Module 4: Inventory Module**.
 
 ## Implemented in Module 1
 
@@ -38,6 +38,18 @@ This repository currently implements **Module 1: Auth Module**, **Module 2: Prof
 - Reusable debounced multi-select catalog search component in `components/catalog/CatalogSearch.tsx`.
 - Standalone preview page at `/catalog` for manually testing search, category filtering, unit display, and chip selection.
 
+## Implemented in Module 4
+
+- Authenticated `inventory_items` Supabase schema with user-owned RLS, catalog item references, merge-friendly denormalized display fields, and inventory indexes.
+- Typed inventory records in `lib/supabase/types.ts` and shared API payload types in `lib/inventory-api-types.ts`.
+- Authenticated `/api/inventory` route with:
+  - `GET` for loading the current user's inventory grouped-ready by category/name ordering.
+  - `POST` for adding one or more items and merging exact `item_name` + `unit` matches by increasing quantity.
+  - `PATCH` for inline quantity edits.
+  - `DELETE` for removing a specific user-owned inventory row.
+- Reusable `components/inventory/AddItemModal.tsx` that embeds the existing `CatalogSearch` component and posts selected catalog items with quantities.
+- `components/inventory/InventoryPanel.tsx` on `/dashboard` with grouped inventory categories, multi-select checkboxes, inline quantity editing, delete actions, and a Module 5 receipt-scan placeholder.
+
 ## Prerequisites
 
 - Node.js 18.17+ recommended.
@@ -55,7 +67,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-key-for-later-modules
 ```
 
-`GOOGLE_GENERATIVE_AI_API_KEY` is included now because later modules use Gemini 1.5 Flash, but Modules 1-2 do not call Gemini.
+`GOOGLE_GENERATIVE_AI_API_KEY` is included now because later modules use Gemini 1.5 Flash, but Modules 1-4 do not call Gemini.
 
 ## Supabase setup
 
@@ -64,7 +76,8 @@ Run the SQL in `supabase/schema.sql` in your Supabase SQL editor. It creates:
 - `public.profiles`
 - `public.family_members`
 - `public.catalog_items`
-- Row Level Security policies for user-owned profile/family access and public read-only catalog access
+- `public.inventory_items`
+- Row Level Security policies for user-owned profile/family/inventory access and public read-only catalog access
 - `public.handle_new_user()` trigger function
 - `on_auth_user_created` trigger on `auth.users`
 
@@ -96,8 +109,8 @@ Open [http://localhost:3000](http://localhost:3000).
 1. Auth Module — complete
 2. Profile & Family Setup Module — complete
 3. Item Catalog & Search Module — complete
-4. Inventory Module — next
-5. Receipt Scanner Module
+4. Inventory Module — complete
+5. Receipt Scanner Module — next
 6. Dashboard Layout Module
 7. Recipe Generation Module
 8. AI Chat Module

@@ -105,3 +105,30 @@ create index if not exists catalog_items_category_idx on public.catalog_items (c
 -- on conflict (name) do update
 -- set category = excluded.category,
 --     default_unit = excluded.default_unit;
+
+
+-- Bawarchee Module 4: authenticated inventory items
+
+create table if not exists public.inventory_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  catalog_item_id uuid references public.catalog_items(id) on delete set null,
+  item_name text not null,
+  category text default 'Other',
+  quantity numeric not null check (quantity >= 0),
+  unit text not null,
+  added_via text default 'search' check (added_via in ('search', 'receipt', 'manual')),
+  updated_at timestamptz not null default timezone('utc'::text, now())
+);
+
+alter table public.inventory_items enable row level security;
+
+drop policy if exists "Users can manage their own inventory items" on public.inventory_items;
+
+create policy "Users can manage their own inventory items"
+  on public.inventory_items for all
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists inventory_items_user_item_name_idx on public.inventory_items (user_id, item_name);
