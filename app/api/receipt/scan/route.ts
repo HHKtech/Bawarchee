@@ -64,7 +64,10 @@ export async function POST(request: NextRequest) {
 
     // 4. Perform fuzzy matching against catalog
     const matchedItems: ReceiptItemExtracted[] = rawExtractedItems.map((rawItem) => {
-      const suggested = rawItem.suggested_name.toLowerCase().trim();
+      const suggested = (rawItem as any).suggested_name
+  ? (rawItem as any).suggested_name.toLowerCase().trim()
+  : rawItem.raw_text.toLowerCase().trim();
+      // const suggested = rawItem.suggested_name.toLowerCase().trim();
       const rawText = rawItem.raw_text.toLowerCase().trim();
 
       let matched = catalogItems.find((c) => c.name.toLowerCase() === suggested);
