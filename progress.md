@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 5 of 9 modules completed + security hardening applied.
-- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, search/select public grocery catalog items, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI to automatically extract and confirm pantry additions, and optionally enable TOTP-based two-factor authentication.
-- **Pending modules:** Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
+- **Overall roadmap:** 6 of 9 modules completed + security hardening applied.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, search/select public grocery catalog items, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI to automatically extract and confirm pantry additions, optionally enable TOTP-based two-factor authentication, and use a responsive 3-panel dashboard shell with shared inventory selection/session state for upcoming recipe and chat flows.
+- **Pending modules:** Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -83,6 +83,19 @@
   - Fixed `middleware.ts` infinite redirect loop for non-onboarded users.
   - Generated `supabase/catalog-seed.sql` — ready-to-run INSERT for all 180 catalog items.
 
+### Module 6 — Dashboard Layout Module
+- Verified Module 5 completion before starting Module 6.
+- Added `context/DashboardContext.tsx` with shared dashboard state for `selectedItemIds`, `activeSessionId`, and `generatedRecipes`, plus selection/session/recipe handlers.
+- Extracted `components/dashboard/DashboardHeader.tsx` with Bawarchee branding, profile navigation, and `LogoutButton`.
+- Updated `app/dashboard/layout.tsx` to wrap the authenticated dashboard shell in `DashboardProvider` and render the shared header.
+- Reworked `app/dashboard/page.tsx` into a responsive dashboard composition layer:
+  - Desktop uses three side-by-side panels for Inventory, AI Chat, and Generated Recipes.
+  - Mobile uses a tab switcher: Inventory / AI Chat / Recipes.
+- Added placeholders for future modules:
+  - `components/chat/ChatPanel.tsx` for Module 8 AI Chat.
+  - `components/recipes/RecipePanel.tsx` for Module 7 recipe generation results.
+- Updated `components/inventory/InventoryPanel.tsx` to use `DashboardContext` for row checkbox state, select-all/clear controls, and a sticky selection banner with selected count and "Generate Recipes ✨" action.
+
 ## 3. Bug Fixes & Upgrades (Post-Module 5)
 
 ### Gemini SDK Migration
@@ -119,7 +132,7 @@
 - **Prerequisite:** TOTP must be enabled in Supabase Dashboard → Authentication → MFA before enrollment calls will succeed.
 
 ## 4. Current Focus
-- Post-Module 5 fixes and security hardening are complete. The next focus is **Module 6: Dashboard Layout**.
+- Module 6 Dashboard Layout is complete. The next immediate focus is **Module 7: Recipe Generation Module**.
 
 ## 5. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -146,6 +159,6 @@
 - 2FA is fully optional per user; users without 2FA enrolled see no change in login flow. Supabase MFA TOTP must be enabled in the project dashboard for enrollment to work.
 
 ## 6. Next Immediate Steps
-- Begin **Module 6: Dashboard Layout**.
-- Design and implement a multi-panel dashboard with nutrition insights widget, household summary card, weekly meal plan teaser, and quick-access shortcuts to recipe generation.
-- Explore reusable card/panel component patterns that will scale into Modules 7–9.
+- Begin **Module 7: Recipe Generation Module**.
+- Implement recipe generation using selected inventory item IDs from `DashboardContext`.
+- Persist and display generated recipe sessions in the right-side Recipe Panel, then prepare the shared session data for Module 8 AI Chat.
