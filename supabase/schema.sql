@@ -48,3 +48,22 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Bawarchee Module 2: profile family setup
+
+create table if not exists public.family_members (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  age_group text not null default 'adult' check (age_group in ('child', 'adult', 'senior')),
+  created_at timestamptz not null default timezone('utc'::text, now())
+);
+
+alter table public.family_members enable row level security;
+
+drop policy if exists "Users can manage their own family members" on public.family_members;
+
+create policy "Users can manage their own family members"
+  on public.family_members for all
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

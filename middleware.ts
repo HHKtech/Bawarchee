@@ -6,6 +6,10 @@ function isCatalogApi(pathname: string) {
   return pathname === '/api/catalog' || pathname.startsWith('/api/catalog/');
 }
 
+function isProfileApi(pathname: string) {
+  return pathname === '/api/profile' || pathname.startsWith('/api/profile/');
+}
+
 function isProtectedPath(pathname: string) {
   return (
     pathname.startsWith('/dashboard') ||
@@ -67,7 +71,11 @@ export async function middleware(request: NextRequest) {
     return redirectTo(request, '/dashboard');
   }
 
-  if (!isOnboarded && pathname !== '/profile/setup' && (isProtectedPath(pathname) || isAuthPage)) {
+  if (isOnboarded && pathname === '/profile/setup') {
+    return redirectTo(request, '/dashboard');
+  }
+
+  if (!isOnboarded && pathname !== '/profile/setup' && !isProfileApi(pathname) && (isProtectedPath(pathname) || isAuthPage)) {
     return redirectTo(request, '/profile/setup');
   }
 

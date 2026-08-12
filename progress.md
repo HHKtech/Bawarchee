@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 1 of 9 modules completed.
-- **Completed module:** Module 1 — Auth Module.
-- **Current status:** Runnable foundation created for future modules.
-- **Pending modules:** Module 2 Profile & Family Setup, Module 3 Item Catalog & Search, Module 4 Inventory, Module 5 Receipt Scanner, Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
+- **Overall roadmap:** 2 of 9 modules completed.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences, and maintain household/family setup data.
+- **Pending modules:** Module 3 Item Catalog & Search, Module 4 Inventory, Module 5 Receipt Scanner, Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -52,8 +52,37 @@
   - `lib/catalog-seed.json` empty seed placeholder.
 - Added `README.md` with setup, env vars, Supabase SQL, and run instructions.
 
+### Module 2 — Profile & Family Setup Module
+- Extended `supabase/schema.sql` with `public.family_members`:
+  - `id`, `user_id`, `age_group`, and `created_at` columns.
+  - `age_group` check constraint for `child`, `adult`, and `senior`.
+  - RLS enabled with an authenticated own-row manage policy.
+- Updated `lib/supabase/types.ts` with typed `family_members`, `AgeGroup`, and `CookingSkill` definitions while keeping `dietary_restrictions` and `cuisine_preference` as `text[]` and `allergies` as plain text.
+- Added `app/api/profile/route.ts`:
+  - `GET` authenticates the current user and returns their `profiles` row plus ordered `family_members` rows.
+  - `POST` authenticates the current user, normalizes profile input, calculates `household_size = family_members.length + 1`, upserts `profiles` with `is_onboarded = true`, and replaces the user's family member rows.
+- Replaced `app/profile/setup/page.tsx` with a 3-step onboarding wizard:
+  - Preferences and restrictions with multi-select dietary/cuisine chips, allergies free text, cooking skill, and optional calorie goal.
+  - Household/family member editor with dynamic age-group rows and real-time portion multiplier.
+  - Review and submit step that saves via `POST /api/profile` and redirects to `/dashboard`.
+- Replaced `app/profile/page.tsx` with editable profile settings:
+  - Loads existing profile/family data from `GET /api/profile`.
+  - Allows updating preferences, family members, and household sizing.
+  - Saves updates through the shared profile API.
+- Added shared Module 2 UI/util files:
+  - `lib/profile-options.ts`
+  - `lib/profile-api-types.ts`
+  - `lib/profile-form.ts`
+  - `components/profile/MultiSelectChips.tsx`
+  - `components/profile/FamilyMembersEditor.tsx`
+  - `components/profile/PreferencesFields.tsx`
+  - `components/profile/ProfileReview.tsx`
+- Updated `middleware.ts` onboarding flow:
+  - Allows not-yet-onboarded users to call `/api/profile` from the setup wizard.
+  - Redirects onboarded users away from `/profile/setup` to `/dashboard`.
+
 ## 3. Current Focus
-- Module 1 is complete. The next focus is **Module 2: Profile & Family Setup Module**.
+- Module 2 is complete. The next focus is **Module 3: Item Catalog & Search Module**.
 
 ## 4. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -64,15 +93,18 @@
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `NEXT_PUBLIC_SITE_URL` for OAuth redirects. Local default is `http://localhost:3000`.
   - `GOOGLE_GENERATIVE_AI_API_KEY` reserved for later Gemini modules.
-- Supabase SQL must be run manually in Supabase before real auth/onboarding checks work.
+- Supabase SQL must be run manually in Supabase before real auth/onboarding/profile behavior works.
 - Middleware route policy:
   - Protected: `/dashboard/:path*`, `/profile/:path*`, `/api/:path*`.
   - Public exception: `/api/catalog` and nested `/api/catalog/*`.
+  - Onboarding API exception: `/api/profile` remains authenticated but is not blocked by the not-onboarded redirect so `/profile/setup` can submit.
   - Public auth pages: `/login`, `/signup`, with redirect to `/dashboard` if already onboarded.
 - New users are expected to have `profiles.is_onboarded = false` from the auth trigger and are routed to `/profile/setup`.
+- Successful Module 2 onboarding sets `profiles.is_onboarded = true`, enabling dashboard access and preventing return to `/profile/setup`.
+- `household_size` is derived as the primary user plus submitted family members (`family_members.length + 1`).
+- `dietary_restrictions` and `cuisine_preference` remain Postgres `text[]`; `allergies` remains plain free text.
 
 ## 5. Next Immediate Steps
-- Begin Module 2: replace `/profile/setup` placeholder with onboarding form.
-- Implement profile GET/POST route for profile and family member data.
-- Add `family_members` schema/RLS and connect household/family-size onboarding fields.
-- Set `profiles.is_onboarded = true` after successful onboarding.
+- Begin Module 3: Item Catalog & Search Module.
+- Replace the public catalog placeholder with real catalog schema/API/search behavior.
+- Keep using the completed profile/family data for later recipe and inventory personalization.
