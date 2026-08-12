@@ -47,6 +47,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isMfaPage = pathname === '/auth/mfa';
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -57,6 +58,24 @@ export async function middleware(request: NextRequest) {
     }
 
     return response;
+  }
+
+  // --- MFA enforcement ---
+  // If the user's session needs aal2 (they have TOTP enrolled) but is still aal1,
+  // redirect to /auth/mfa for any protected path.
+  if (!isMfaPage && isProtectedPath(pathname)) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.nextLevel === 'aal2' && aal.nextLevel !== aal.currentLevel) {
+      return redirectTo(request, '/auth/mfa');
+    }
+  }
+
+  // Redirect away from /auth/mfa if session is already aal2
+  if (isMfaPage) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.currentLevel === 'aal2') {
+      return redirectTo(request, '/dashboard');
+    }
   }
 
   const { data: profile, error: profileError } = await (supabase
@@ -99,6 +118,7 @@ export const config = {
   matcher: [
     '/login',
     '/signup',
+    '/auth/mfa',
     '/dashboard/:path*',
     '/profile/:path*',
     '/api/:path*'

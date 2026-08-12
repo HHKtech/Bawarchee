@@ -2,9 +2,9 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 5 of 9 modules completed.
+- **Overall roadmap:** 5 of 9 modules completed + security hardening applied.
 - **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, search/select public grocery catalog items, maintain a user-scoped pantry inventory, and scan grocery receipts with Gemini AI to automatically extract and confirm pantry additions.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, search/select public grocery catalog items, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI to automatically extract and confirm pantry additions, and optionally enable TOTP-based two-factor authentication.
 - **Pending modules:** Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
@@ -83,10 +83,45 @@
   - Fixed `middleware.ts` infinite redirect loop for non-onboarded users.
   - Generated `supabase/catalog-seed.sql` — ready-to-run INSERT for all 180 catalog items.
 
-## 3. Current Focus
-- Module 5 is fully complete (all 3 phases). The next focus is **Module 6: Dashboard Layout**.
+## 3. Bug Fixes & Upgrades (Post-Module 5)
 
-## 4. Key Technical Decisions / Env Vars / Architecture Notes
+### Gemini SDK Migration
+- **Root cause:** `@google/generative-ai` v0.21.0 (old SDK) uses the `v1beta` API endpoint, which no longer supports `gemini-1.5-flash`, `gemini-2.0-flash`, or `gemini-2.5-flash` for new API key formats (`AQ.*` prefix).
+- **Fix:** Migrated `lib/gemini.ts` from `@google/generative-ai` to `@google/genai` (new unified SDK).
+  - Replaced `GoogleGenerativeAI` with `GoogleGenAI({ apiKey })`.
+  - Updated `generateContent` call to use `client.models.generateContent({ model, contents })` format.
+  - Updated response access from `result.response.text()` to `result.text`.
+  - Model set to `gemini-2.5-flash` (confirmed available via `ListModels` API check).
+- Installed `@google/genai` package (`npm install @google/genai`).
+
+### Receipt Scan Route Bug Fix
+- **Root cause:** `app/api/receipt/scan/route.ts` was referencing `rawItem.suggested_name`, `rawItem.category`, and `rawItem.confidence` — fields that don't exist on `ExtractedReceiptItem` returned by `lib/gemini.ts` (which only has `raw_text`, `quantity`, `unit`).
+- **Fix:** Updated fuzzy-matching logic in `route.ts` to use `raw_text` as the match key, removed references to non-existent fields, and replaced `rawItem.confidence` / `rawItem.category` with safe hardcoded defaults (`0.85` matched, `0.5` unmatched, `'Other'` category).
+
+### Two-Factor Authentication (Optional, Per-User TOTP)
+- Implemented optional TOTP-based 2FA using Supabase's built-in MFA API — no extra libraries required.
+- **New API routes:**
+  - `GET /api/auth/mfa/status` — returns `{ enabled, factorId }` for the current user.
+  - `POST /api/auth/mfa/enroll` — starts TOTP enrollment; returns `{ factorId, qrCode, secret, uri }`.
+  - `POST /api/auth/mfa/verify` — verifies a TOTP code against a factor (used for enrollment confirmation).
+  - `POST /api/auth/mfa/unenroll` — removes the TOTP factor, disabling 2FA.
+- **New page:** `app/auth/mfa/page.tsx` — 6-digit OTP entry screen shown after password login when 2FA is enabled.
+- **New components:**
+  - `components/auth/MfaVerifyForm.tsx` — styled OTP input that calls `supabase.auth.mfa.challengeAndVerify()` and redirects to dashboard on success.
+  - `components/profile/TwoFactorSection.tsx` — profile security panel with status badge, QR code enrollment flow (with manual secret fallback), code confirmation input, and disable button with confirmation dialog.
+- **Modified `app/auth/actions.ts`:** After `signInWithPassword`, lists MFA factors and redirects to `/auth/mfa` instead of `/dashboard` if a verified TOTP factor exists.
+- **Modified `middleware.ts`:**
+  - Uses `supabase.auth.mfa.getAuthenticatorAssuranceLevel()` to detect when `nextLevel === 'aal2'` but `currentLevel === 'aal1'`.
+  - Redirects to `/auth/mfa` for all protected paths in this state.
+  - Redirects away from `/auth/mfa` to `/dashboard` if session is already `aal2`.
+  - Added `/auth/mfa` to the middleware matcher.
+- **Modified `app/profile/page.tsx`:** Added `<TwoFactorSection />` below the Household setup card as a new Security section.
+- **Prerequisite:** TOTP must be enabled in Supabase Dashboard → Authentication → MFA before enrollment calls will succeed.
+
+## 4. Current Focus
+- Post-Module 5 fixes and security hardening are complete. The next focus is **Module 6: Dashboard Layout**.
+
+## 5. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
 - Use **@supabase/ssr exclusively**; deprecated `@supabase/auth-helpers-nextjs` is not used.
 - Auth client files expose `createClient()` separately for browser and server environments.
@@ -94,21 +129,23 @@
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `NEXT_PUBLIC_SITE_URL` for OAuth redirects. Local default is `http://localhost:3000`.
-  - `GOOGLE_GENERATIVE_AI_API_KEY` for Gemini receipt parsing & recipe generation.
+  - `GOOGLE_GENERATIVE_AI_API_KEY` for Gemini receipt parsing & recipe generation. Must be a new-format key (`AQ.*`) using `@google/genai` SDK.
 - Supabase SQL must be run manually in Supabase before real auth/onboarding/profile/catalog/inventory/receipt behavior works.
 - Middleware route policy:
-  - Protected: `/dashboard/:path*`, `/profile/:path*`, and `/api/:path*`.
+  - Protected: `/dashboard/:path*`, `/profile/:path*`, `/auth/mfa`, and `/api/:path*`.
   - Public exception: `/api/catalog` and nested `/api/catalog/*`.
   - Onboarding API exception: `/api/profile` remains authenticated but is not blocked by the not-onboarded redirect so `/profile/setup` can submit.
+  - MFA enforcement: if session AAL is `aal1` but next required level is `aal2`, all protected paths redirect to `/auth/mfa`.
 - New users are expected to have `profiles.is_onboarded = false` from the auth trigger and are routed to `/profile/setup`.
 - Successful Module 2 onboarding sets `profiles.is_onboarded = true`, enabling dashboard access and preventing return to `/profile/setup`.
 - `household_size` is derived as the primary user plus submitted family members (`family_members.length + 1`).
 - `/api/catalog` remains public through the existing middleware exception and returns seed fallback results if Supabase catalog access is unavailable.
 - Inventory operations are always authenticated through `lib/supabase/server.ts` and explicitly scoped by `user_id = auth.uid()` / `user.id` in route queries.
 - Inventory add workflows reuse `CatalogSearch` and `/api/catalog`; exact `item_name` + `unit` matches merge quantities instead of creating duplicate rows.
-- Receipt scanner parses images via Gemini, fuzzy-matches line items against catalog, and merges confirmed items into `public.inventory_items`.
+- Receipt scanner parses images via Gemini (`@google/genai` SDK, `gemini-2.5-flash`), fuzzy-matches line items against catalog, and merges confirmed items into `public.inventory_items`.
+- 2FA is fully optional per user; users without 2FA enrolled see no change in login flow. Supabase MFA TOTP must be enabled in the project dashboard for enrollment to work.
 
-## 5. Next Immediate Steps
+## 6. Next Immediate Steps
 - Begin **Module 6: Dashboard Layout**.
 - Design and implement a multi-panel dashboard with nutrition insights widget, household summary card, weekly meal plan teaser, and quick-access shortcuts to recipe generation.
 - Explore reusable card/panel component patterns that will scale into Modules 7–9.
