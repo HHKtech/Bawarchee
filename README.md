@@ -2,7 +2,7 @@
 
 Bawarchee is a fresh-start Next.js 14 App Router application for intelligent household pantry inventory and conversational recipe assistance.
 
-This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, **Module 3: Item Catalog & Search Module**, **Module 4: Inventory Module**, and **Module 5 Phase 1: Receipt Scanner foundation**.
+This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, **Module 3: Item Catalog & Search Module**, **Module 4: Inventory Module**, **Module 5: Receipt Scanner Module**, and **Module 6: Dashboard Layout Module**.
 
 ## Implemented in Module 1
 
@@ -50,12 +50,22 @@ This repository currently implements **Module 1: Auth Module**, **Module 2: Prof
 - Reusable `components/inventory/AddItemModal.tsx` that embeds the existing `CatalogSearch` component and posts selected catalog items with quantities.
 - `components/inventory/InventoryPanel.tsx` on `/dashboard` with grouped inventory categories, multi-select checkboxes, inline quantity editing, delete actions, and a Module 5 receipt-scan placeholder.
 
-## Implemented in Module 5 Phase 1
+## Implemented in Module 5
 
 - Added `receipt_scans` and `receipt_scan_items` Supabase schema with authenticated user-owned RLS policies.
 - Added private `receipts` Supabase Storage bucket setup notes/policies for per-user receipt image paths.
-- Added typed receipt scan records in `lib/supabase/types.ts`.
-- Added `extractItemsFromReceipt(imageBuffer, mimeType)` in `lib/gemini.ts` using Gemini 1.5 Flash vision to return structured receipt line items.
+- Added typed receipt scan records and shared receipt API payload types.
+- Added Gemini-powered receipt item extraction with graceful fallback parsing.
+- Implemented authenticated receipt scan and confirmation API routes.
+- Added `components/inventory/ReceiptScanModal.tsx` and wired the live `📷 Scan Receipt` flow into the inventory panel.
+
+## Implemented in Module 6
+
+- Added `context/DashboardContext.tsx` for shared dashboard selections, active recipe session, and generated recipe state.
+- Extracted `components/dashboard/DashboardHeader.tsx` with Bawarchee branding, profile link, and logout action.
+- Updated `/dashboard` to render a responsive 3-panel shell: Inventory, AI Chat placeholder, and Generated Recipes placeholder.
+- Added mobile tabs for switching between Inventory, AI Chat, and Recipes on small screens.
+- Connected inventory row checkboxes to dashboard context and added a sticky selection banner with `Generate Recipes ✨`.
 
 ## Prerequisites
 
@@ -74,7 +84,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-key-for-receipt-extraction
 ```
 
-`GOOGLE_GENERATIVE_AI_API_KEY` is required by the Module 5 Phase 1 Gemini receipt extraction helper. The Phase 2 UI/API will call this helper.
+`GOOGLE_GENERATIVE_AI_API_KEY` is required by the Module 5 Gemini receipt extraction helper and will also be used by the upcoming Module 7 recipe generation flow.
 
 ## Supabase setup
 
@@ -120,8 +130,8 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Profile & Family Setup Module — complete
 3. Item Catalog & Search Module — complete
 4. Inventory Module — complete
-5. Receipt Scanner Module — Phase 1 complete; Phase 2 receipt scanner API/UI next
-6. Dashboard Layout Module
-7. Recipe Generation Module
+5. Receipt Scanner Module — complete
+6. Dashboard Layout Module — complete
+7. Recipe Generation Module — next
 8. AI Chat Module
 9. Consumption & Deduction Module

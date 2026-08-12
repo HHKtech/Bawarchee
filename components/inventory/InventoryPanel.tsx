@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AddItemModal } from '@/components/inventory/AddItemModal';
 import { InventoryItemRow } from '@/components/inventory/InventoryItemRow';
 import { ReceiptScanModal } from '@/components/inventory/ReceiptScanModal';
+import { useDashboard } from '@/context/DashboardContext';
 import type { InventoryResponse } from '@/lib/inventory-api-types';
 import type { InventoryItem } from '@/lib/supabase/types';
 
@@ -20,9 +21,9 @@ function groupInventoryItems(items: InventoryItem[]): GroupedInventory {
 }
 
 export function InventoryPanel() {
+  const { selectedItemIds, toggleSelectItem, selectAllItems, clearSelections, setActiveSessionId, setGeneratedRecipes } = useDashboard();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +31,8 @@ export function InventoryPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const groupedItems = useMemo(() => groupInventoryItems(items), [items]);
+  const selectedItems = useMemo(() => items.filter((item) => selectedItemIds.includes(item.id)), [items, selectedItemIds]);
+  const allItemIds = useMemo(() => items.map((item) => item.id), [items]);
 
   const loadInventory = useCallback(async () => {
     setIsLoading(true);
@@ -57,16 +60,10 @@ export function InventoryPanel() {
     loadInventory();
   }, [loadInventory]);
 
-  function toggleSelected(id: string) {
-    setSelectedIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-      if (nextIds.has(id)) {
-        nextIds.delete(id);
-      } else {
-        nextIds.add(id);
-      }
-      return nextIds;
-    });
+  function generateRecipes() {
+    const sessionId = `recipe-session-${Date.now()}`;
+    setActiveSessionId(sessionId);
+    setGeneratedRecipes([]);
   }
 
   async function updateQuantity(item: InventoryItem) {
@@ -114,11 +111,9 @@ export function InventoryPanel() {
       }
 
       setItems((currentItems) => currentItems.filter((currentItem) => currentItem.id !== item.id));
-      setSelectedIds((currentIds) => {
-        const nextIds = new Set(currentIds);
-        nextIds.delete(item.id);
-        return nextIds;
-      });
+      if (selectedItemIds.includes(item.id)) {
+        toggleSelectItem(item.id);
+      }
     } catch (deleteError) {
       setError((deleteError as Error).message);
     } finally {
@@ -127,7 +122,7 @@ export function InventoryPanel() {
   }
 
   return (
-    <section className="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
+    <section className="relative rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
       <AddItemModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onItemsAdded={loadInventory} />
       <ReceiptScanModal isOpen={isReceiptModalOpen} onClose={() => setIsReceiptModalOpen(false)} onItemsAdded={loadInventory} />
 
@@ -155,7 +150,20 @@ export function InventoryPanel() {
       <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-gray-500">
         <span>{items.length} item{items.length === 1 ? '' : 's'} in pantry</span>
         <span>•</span>
-        <span>{selectedIds.size} selected for future recipes</span>
+        <span>{selectedItemIds.length} selected for recipes</span>
+        {items.length > 0 ? (
+          <>
+            <span>•</span>
+            <button type="button" onClick={() => selectAllItems(allItemIds)} className="font-bold text-amber-700 hover:text-amber-800">
+              Select all
+            </button>
+            {selectedItemIds.length > 0 ? (
+              <button type="button" onClick={clearSelections} className="font-bold text-gray-500 hover:text-gray-700">
+                Clear
+              </button>
+            ) : null}
+          </>
+        ) : null}
       </div>
 
       {error ? <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
@@ -173,7 +181,7 @@ export function InventoryPanel() {
       ) : null}
 
       {!isLoading && items.length > 0 ? (
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6 pb-24">
           {groupedItems.map(([category, categoryItems]) => (
             <div key={category}>
               <div className="mb-3 flex items-center gap-3">
@@ -186,10 +194,10 @@ export function InventoryPanel() {
                   <InventoryItemRow
                     key={item.id}
                     item={item}
-                    isSelected={selectedIds.has(item.id)}
+                    isSelected={selectedItemIds.includes(item.id)}
                     isBusy={busyItemId === item.id}
                     quantityDraft={quantityDrafts[item.id] ?? String(item.quantity)}
-                    onToggleSelected={toggleSelected}
+                    onToggleSelected={toggleSelectItem}
                     onQuantityDraftChange={(id, quantity) => setQuantityDrafts((drafts) => ({ ...drafts, [id]: quantity }))}
                     onSaveQuantity={updateQuantity}
                     onDelete={deleteItem}
@@ -198,6 +206,24 @@ export function InventoryPanel() {
               </div>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {selectedItemIds.length > 0 ? (
+        <div className="sticky bottom-4 z-20 mt-6 rounded-3xl border border-amber-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-gray-950">
+                {selectedItemIds.length} item{selectedItemIds.length === 1 ? '' : 's'} selected
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                {selectedItems.slice(0, 3).map((item) => item.item_name).join(', ')}{selectedItems.length > 3 ? ` +${selectedItems.length - 3} more` : ''}
+              </p>
+            </div>
+            <button type="button" onClick={generateRecipes} className="rounded-full bg-amber-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-700">
+              Generate Recipes ✨
+            </button>
+          </div>
         </div>
       ) : null}
     </section>
