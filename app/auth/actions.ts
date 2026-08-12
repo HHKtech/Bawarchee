@@ -31,6 +31,15 @@ export async function loginWithPassword(
   const { error } = await supabase.auth.signInWithPassword(fields);
 
   if (error) return { error: error.message };
+
+  // Check if user has an enrolled TOTP factor — redirect to MFA step if so
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const hasVerifiedTotp = factors?.totp?.some((f) => f.status === 'verified') ?? false;
+
+  if (hasVerifiedTotp) {
+    redirect('/auth/mfa');
+  }
+
   redirect('/dashboard');
 }
 
