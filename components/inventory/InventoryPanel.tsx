@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AddItemModal } from '@/components/inventory/AddItemModal';
 import { InventoryItemRow } from '@/components/inventory/InventoryItemRow';
+import { ReceiptScanModal } from '@/components/inventory/ReceiptScanModal';
 import type { InventoryResponse } from '@/lib/inventory-api-types';
 import type { InventoryItem } from '@/lib/supabase/types';
 
@@ -23,6 +24,7 @@ export function InventoryPanel() {
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +129,7 @@ export function InventoryPanel() {
   return (
     <section className="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
       <AddItemModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onItemsAdded={loadInventory} />
+      <ReceiptScanModal isOpen={isReceiptModalOpen} onClose={() => setIsReceiptModalOpen(false)} onItemsAdded={loadInventory} />
 
       <div className="flex flex-col gap-4 border-b border-amber-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -138,8 +141,13 @@ export function InventoryPanel() {
           <button type="button" onClick={() => setIsModalOpen(true)} className="rounded-full bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-amber-700">
             Add Items
           </button>
-          <button type="button" className="rounded-full border border-dashed border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100">
-            Scan Receipt soon
+          <button
+            type="button"
+            onClick={() => setIsReceiptModalOpen(true)}
+            className="rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100"
+            id="scan-receipt-btn"
+          >
+            📷 Scan Receipt
           </button>
         </div>
       </div>
