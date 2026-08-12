@@ -1,5 +1,11 @@
 export type AgeGroup = 'child' | 'adult' | 'senior';
 export type CookingSkill = 'beginner' | 'intermediate' | 'advanced';
+export type CatalogItem = {
+  id: string;
+  name: string;
+  category: string;
+  default_unit: string;
+};
 
 export type Profile = {
   id: string;
@@ -48,6 +54,17 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<FamilyMember, 'id' | 'user_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      catalog_items: {
+        Row: CatalogItem;
+        Insert: {
+          id?: string;
+          name: string;
+          category: string;
+          default_unit: string;
+        };
+        Update: Partial<Omit<CatalogItem, 'id'>>;
         Relationships: [];
       };
     };

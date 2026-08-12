@@ -67,3 +67,41 @@ create policy "Users can manage their own family members"
   to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Bawarchee Module 3: public grocery catalog
+
+create table if not exists public.catalog_items (
+  id uuid primary key default gen_random_uuid(),
+  name text unique not null,
+  category text not null,
+  default_unit text not null
+);
+
+alter table public.catalog_items enable row level security;
+
+drop policy if exists "Catalog items are publicly readable" on public.catalog_items;
+
+create policy "Catalog items are publicly readable"
+  on public.catalog_items for select
+  to anon, authenticated
+  using (true);
+
+create index if not exists catalog_items_name_idx on public.catalog_items (name);
+create index if not exists catalog_items_category_idx on public.catalog_items (category);
+
+-- Seed script guidance:
+-- 1. Copy the JSON array from lib/catalog-seed.json.
+-- 2. In Supabase SQL editor, paste it into the jsonb literal below and run:
+--
+-- with seed_items as (
+--   select *
+--   from jsonb_to_recordset($json$
+--   [paste lib/catalog-seed.json contents here]
+--   $json$::jsonb) as item(name text, category text, default_unit text)
+-- )
+-- insert into public.catalog_items (name, category, default_unit)
+-- select lower(trim(name)), trim(category), trim(default_unit)
+-- from seed_items
+-- on conflict (name) do update
+-- set category = excluded.category,
+--     default_unit = excluded.default_unit;

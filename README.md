@@ -2,7 +2,7 @@
 
 Bawarchee is a fresh-start Next.js 14 App Router application for intelligent household pantry inventory and conversational recipe assistance.
 
-This repository currently implements **Phase 1 / Module 1: Auth Module** and **Phase 2 / Module 2: Profile & Family Setup Module**.
+This repository currently implements **Module 1: Auth Module**, **Module 2: Profile & Family Setup Module**, and **Module 3: Item Catalog & Search Module**.
 
 ## Implemented in Module 1
 
@@ -30,6 +30,14 @@ This repository currently implements **Phase 1 / Module 1: Auth Module** and **P
 - Editable settings page at `/profile` for preferences and household setup.
 - Middleware support for completing onboarding via `/api/profile` and redirecting onboarded users away from `/profile/setup`.
 
+## Implemented in Module 3
+
+- Curated grocery/pantry seed catalog in `lib/catalog-seed.json` covering vegetables, fruits, proteins, seafood, dairy, grains, spices, condiments, bakery, beverages, and pantry staples.
+- Public `catalog_items` Supabase schema with read-only RLS for anonymous and authenticated users.
+- Public `/api/catalog` search endpoint with `q`, `category`, and `limit` query parameters plus JSON seed fallback while the database is unseeded or unavailable.
+- Reusable debounced multi-select catalog search component in `components/catalog/CatalogSearch.tsx`.
+- Standalone preview page at `/catalog` for manually testing search, category filtering, unit display, and chip selection.
+
 ## Prerequisites
 
 - Node.js 18.17+ recommended.
@@ -55,9 +63,12 @@ Run the SQL in `supabase/schema.sql` in your Supabase SQL editor. It creates:
 
 - `public.profiles`
 - `public.family_members`
-- Row Level Security policies for user-owned profile and family-member access
+- `public.catalog_items`
+- Row Level Security policies for user-owned profile/family access and public read-only catalog access
 - `public.handle_new_user()` trigger function
 - `on_auth_user_created` trigger on `auth.users`
+
+To seed the grocery catalog, copy the JSON array from `lib/catalog-seed.json` into the commented `jsonb_to_recordset` seed script at the bottom of `supabase/schema.sql`, then run it in the Supabase SQL editor.
 
 For Google OAuth, configure the Supabase provider and add this redirect URL:
 
@@ -84,8 +95,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Auth Module — complete
 2. Profile & Family Setup Module — complete
-3. Item Catalog & Search Module — next
-4. Inventory Module
+3. Item Catalog & Search Module — complete
+4. Inventory Module — next
 5. Receipt Scanner Module
 6. Dashboard Layout Module
 7. Recipe Generation Module

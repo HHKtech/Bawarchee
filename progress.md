@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 2 of 9 modules completed.
-- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences, and maintain household/family setup data.
-- **Pending modules:** Module 3 Item Catalog & Search, Module 4 Inventory, Module 5 Receipt Scanner, Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
+- **Overall roadmap:** 3 of 9 modules completed.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences, maintain household/family setup data, and search/select public grocery catalog items.
+- **Pending modules:** Module 4 Inventory, Module 5 Receipt Scanner, Module 6 Dashboard Layout, Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -81,8 +81,34 @@
   - Allows not-yet-onboarded users to call `/api/profile` from the setup wizard.
   - Redirects onboarded users away from `/profile/setup` to `/dashboard`.
 
+### Module 3 — Item Catalog & Search Module
+- Populated `lib/catalog-seed.json` with a curated grocery/pantry catalog covering Vegetables, Fruits, Meat & Poultry, Seafood, Dairy & Eggs, Grains & Pulses, Spices & Seasonings, Oils & Condiments, Bakery, Beverages, and Baking & Pantry.
+- Added shared catalog utilities and types in `lib/catalog.ts`:
+  - `CatalogItem` and `CatalogResponse` types.
+  - category constants.
+  - limit normalization and JSON seed filtering for fallback behavior.
+- Extended `supabase/schema.sql` with `public.catalog_items`:
+  - `id`, `name`, `category`, and `default_unit` columns.
+  - unique item names.
+  - RLS enabled with public read-only `select` policy for `anon` and `authenticated` roles.
+  - indexes for `name` and `category`.
+  - commented seed script using `jsonb_to_recordset` and the contents of `lib/catalog-seed.json`.
+- Updated `lib/supabase/types.ts` with typed `catalog_items` table definitions.
+- Replaced `app/api/catalog/route.ts` placeholder with a public `GET /api/catalog` endpoint:
+  - accepts `q`, `category`, and `limit` query parameters.
+  - performs Supabase `ilike` partial name search and category filtering.
+  - returns `{ items, total }`.
+  - falls back to local JSON seed filtering if Supabase env/database/table access is unavailable or the table has not been seeded yet.
+- Added reusable `components/catalog/CatalogSearch.tsx`:
+  - 200ms debounced search-as-you-type input.
+  - category filter pills.
+  - multi-select item cards and selected chips.
+  - category badges and default unit display.
+- Added standalone catalog preview page at `app/catalog/page.tsx` for manual end-to-end testing.
+- Updated `README.md` with Module 3 details, Supabase catalog setup notes, and roadmap status.
+
 ## 3. Current Focus
-- Module 2 is complete. The next focus is **Module 3: Item Catalog & Search Module**.
+- Module 3 is complete. The next focus is **Module 4: Inventory Module**.
 
 ## 4. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -103,8 +129,10 @@
 - Successful Module 2 onboarding sets `profiles.is_onboarded = true`, enabling dashboard access and preventing return to `/profile/setup`.
 - `household_size` is derived as the primary user plus submitted family members (`family_members.length + 1`).
 - `dietary_restrictions` and `cuisine_preference` remain Postgres `text[]`; `allergies` remains plain free text.
+- `/api/catalog` remains public through the existing middleware exception and returns seed fallback results if Supabase catalog access is unavailable.
+- Catalog search uses Supabase `ilike` for case-insensitive partial matching and the client UI debounces input by 200ms.
 
 ## 5. Next Immediate Steps
-- Begin Module 3: Item Catalog & Search Module.
-- Replace the public catalog placeholder with real catalog schema/API/search behavior.
-- Keep using the completed profile/family data for later recipe and inventory personalization.
+- Begin Module 4: Inventory Module.
+- Reuse `components/catalog/CatalogSearch.tsx` for adding pantry items from the public catalog.
+- Design authenticated inventory tables and APIs around the completed profile/family and catalog foundations.
