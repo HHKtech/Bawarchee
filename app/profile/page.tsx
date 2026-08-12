@@ -8,6 +8,7 @@ import { PreferencesFields } from '@/components/profile/PreferencesFields';
 import { ProfileReview } from '@/components/profile/ProfileReview';
 import { defaultProfileFormState, formToPayload, profileResponseToForm, type ProfileFormState } from '@/lib/profile-form';
 import type { ProfileApiResponse } from '@/lib/profile-api-types';
+import { TwoFactorSection } from '@/components/profile/TwoFactorSection';
 
 export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>(defaultProfileFormState);
@@ -118,6 +119,8 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
+
+              <TwoFactorSection />
             </div>
 
             <aside className="h-fit rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">

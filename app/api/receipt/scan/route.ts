@@ -64,18 +64,17 @@ export async function POST(request: NextRequest) {
 
     // 4. Perform fuzzy matching against catalog
     const matchedItems: ReceiptItemExtracted[] = rawExtractedItems.map((rawItem) => {
-      const suggested = rawItem.suggested_name.toLowerCase().trim();
+      const suggested = (rawItem as any).suggested_name
+  ? (rawItem as any).suggested_name.toLowerCase().trim()
+  : rawItem.raw_text.toLowerCase().trim();
+      // const suggested = rawItem.suggested_name.toLowerCase().trim();
       const rawText = rawItem.raw_text.toLowerCase().trim();
 
-      let matched = catalogItems.find((c) => c.name.toLowerCase() === suggested);
-
-      if (!matched) {
-        matched = catalogItems.find((c) => c.name.toLowerCase() === rawText);
-      }
+      let matched = catalogItems.find((c) => c.name.toLowerCase() === rawText);
 
       if (!matched) {
         matched = catalogItems.find(
-          (c) => suggested.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(suggested)
+          (c) => rawText.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(rawText)
         );
       }
 
@@ -87,18 +86,18 @@ export async function POST(request: NextRequest) {
           category: matched.category,
           quantity: rawItem.quantity,
           unit: rawItem.unit || matched.default_unit,
-          confidence: Math.min(rawItem.confidence + 0.05, 1.0),
+          confidence: 0.85,
         };
       }
 
       return {
         raw_text: rawItem.raw_text,
-        item_name: rawItem.suggested_name || rawItem.raw_text,
+        item_name: rawItem.raw_text,
         catalog_item_id: null,
-        category: rawItem.category || 'Other',
+        category: 'Other',
         quantity: rawItem.quantity,
         unit: rawItem.unit || 'pcs',
-        confidence: rawItem.confidence,
+        confidence: 0.5,
       };
     });
 
