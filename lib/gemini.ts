@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -29,7 +29,7 @@ function getGeminiClient() {
     throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is required for receipt extraction.');
   }
 
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenerativeAI(apiKey);
 }
 
 function stripJsonFence(text: string) {
@@ -77,31 +77,26 @@ export async function extractItemsFromReceipt(
     throw new Error('Receipt extraction requires an image MIME type.');
   }
 
-  const result = await getGeminiClient().models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [
-      {
-        role: 'user',
-        parts: [
-          { text: RECEIPT_EXTRACTION_PROMPT },
-          {
-            inlineData: {
-              data: imageBuffer.toString('base64'),
-              mimeType,
-            },
-          },
-        ],
+  const model = getGeminiClient().getGenerativeModel({ model: GEMINI_MODEL });
+  const result = await model.generateContent([
+    RECEIPT_EXTRACTION_PROMPT,
+    {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType,
       },
-    ],
-  });
+    },
+  ]);
 
-  const responseText = stripJsonFence(result.text ?? '');
+  const responseText = stripJsonFence(result.response.text());
 
   try {
     return coerceReceiptItems(JSON.parse(responseText));
   } catch (error) {
     throw new Error(
-      `Failed to parse Gemini receipt extraction JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      `Failed to parse Gemini receipt extraction JSON: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
     );
   }
 }
