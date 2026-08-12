@@ -59,11 +59,17 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  const { data: profile, error: profileError } = await (supabase
+    .from('profiles') as any)
     .select('is_onboarded')
     .eq('id', user.id)
     .maybeSingle();
+
+  // If we can't read the profile at all (table missing, network error, etc.)
+  // let the user through rather than looping.
+  if (profileError) {
+    return response;
+  }
 
   const isOnboarded = profile?.is_onboarded === true;
 
@@ -75,7 +81,14 @@ export async function middleware(request: NextRequest) {
     return redirectTo(request, '/dashboard');
   }
 
-  if (!isOnboarded && pathname !== '/profile/setup' && !isProfileApi(pathname) && (isProtectedPath(pathname) || isAuthPage)) {
+  // Only redirect to /profile/setup if the user is NOT already going there
+  // and NOT hitting an auth page (avoids infinite loop).
+  if (
+    !isOnboarded &&
+    pathname !== '/profile/setup' &&
+    !isProfileApi(pathname) &&
+    isProtectedPath(pathname)
+  ) {
     return redirectTo(request, '/profile/setup');
   }
 

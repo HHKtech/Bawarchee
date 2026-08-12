@@ -11,7 +11,7 @@ function cleanStringArray(value: unknown) {
     return [];
   }
 
-  return [...new Set(value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean))];
+  return Array.from(new Set(value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean)));
 }
 
 function parsePayload(body: unknown): ProfilePayload {
@@ -48,8 +48,8 @@ export async function GET() {
   }
 
   const [{ data: profile, error: profileError }, { data: familyMembers, error: familyError }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-    supabase.from('family_members').select('id, user_id, age_group, created_at').eq('user_id', user.id).order('created_at', { ascending: true })
+    (supabase.from('profiles') as any).select('*').eq('id', user.id).maybeSingle(),
+    (supabase.from('family_members') as any).select('id, user_id, age_group, created_at').eq('user_id', user.id).order('created_at', { ascending: true })
   ]);
 
   if (profileError || familyError) {
@@ -76,8 +76,8 @@ export async function POST(request: Request) {
   }
 
   const householdSize = payload.family_members.length + 1;
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
+  const { data: profile, error: profileError } = await (supabase
+    .from('profiles') as any)
     .upsert({
       id: user.id,
       dietary_restrictions: payload.dietary_restrictions,
@@ -95,15 +95,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  const { error: deleteError } = await supabase.from('family_members').delete().eq('user_id', user.id);
+  const { error: deleteError } = await (supabase.from('family_members') as any).delete().eq('user_id', user.id);
 
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
   if (payload.family_members.length > 0) {
-    const { error: insertError } = await supabase
-      .from('family_members')
+    const { error: insertError } = await (supabase
+      .from('family_members') as any)
       .insert(payload.family_members.map((member) => ({ user_id: user.id, age_group: member.age_group })));
 
     if (insertError) {
@@ -111,8 +111,8 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: familyMembers } = await supabase
-    .from('family_members')
+  const { data: familyMembers } = await (supabase
+    .from('family_members') as any)
     .select('id, user_id, age_group, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: true });

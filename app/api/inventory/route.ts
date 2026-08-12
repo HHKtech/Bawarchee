@@ -56,8 +56,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from('inventory_items')
+  const { data, error } = await (supabase.from('inventory_items') as any)
     .select('*')
     .eq('user_id', user.id)
     .order('category', { ascending: true })
@@ -90,8 +89,7 @@ export async function POST(request: NextRequest) {
   }
 
   for (const item of items) {
-    const { data: existing, error: existingError } = await supabase
-      .from('inventory_items')
+    const { data: existing, error: existingError } = await (supabase.from('inventory_items') as any)
       .select('id, quantity')
       .eq('user_id', user.id)
       .eq('item_name', item.item_name)
@@ -103,8 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (existing) {
-      const { error: updateError } = await supabase
-        .from('inventory_items')
+      const { error: updateError } = await (supabase.from('inventory_items') as any)
         .update({ quantity: Number(existing.quantity) + item.quantity, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
         .eq('user_id', user.id);
@@ -113,7 +110,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: updateError.message }, { status: 500 });
       }
     } else {
-      const { error: insertError } = await supabase.from('inventory_items').insert({ ...item, user_id: user.id });
+      const { error: insertError } = await (supabase.from('inventory_items') as any).insert({ ...item, user_id: user.id });
 
       if (insertError) {
         return NextResponse.json({ error: insertError.message }, { status: 500 });
@@ -121,8 +118,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { data, error } = await supabase
-    .from('inventory_items')
+  const { data, error } = await (supabase.from('inventory_items') as any)
     .select('*')
     .eq('user_id', user.id)
     .order('category', { ascending: true })
@@ -157,8 +153,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Provide a valid id and non-negative quantity' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from('inventory_items')
+  const { data, error } = await (supabase.from('inventory_items') as any)
     .update({ quantity, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', user.id)
@@ -194,7 +189,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Provide an inventory item id' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('inventory_items').delete().eq('id', id).eq('user_id', user.id);
+  const { error } = await (supabase.from('inventory_items') as any).delete().eq('id', id).eq('user_id', user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
