@@ -24,7 +24,8 @@ export function SignupForm() {
 
   return (
     <div className="w-full max-w-md rounded-3xl border border-white/80 bg-white/90 p-8 shadow-xl shadow-amber-100 backdrop-blur">
-      <div className="mb-8 text-center">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <img src="/logo.png" alt="Bawarchee Logo" className="mb-4 h-16 w-16 object-contain" />
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-600">Start cooking smarter</p>
         <h1 className="mt-3 text-3xl font-bold text-gray-950">Create your Bawarchee account</h1>
         <p className="mt-2 text-sm text-gray-600">Sign up to begin personalized pantry and recipe planning.</p>

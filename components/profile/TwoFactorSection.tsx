@@ -122,11 +122,7 @@ export function TwoFactorSection() {
   return (
     <div className="rounded-3xl border border-amber-100 bg-amber-50/40 p-5 sm:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
-          <svg className="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-        </div>
+        <img src="/logo.png" alt="Bawarchee Logo" className="h-9 w-9 shrink-0 object-contain" />
         <div>
           <h2 className="text-lg font-bold text-gray-950">Two-factor authentication</h2>
           <p className="text-sm text-gray-500">Add a second layer of security to your account.</p>

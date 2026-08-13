@@ -51,12 +51,15 @@ export default function ProfileSetupPage() {
     <main className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-4 py-10">
       <section className="mx-auto w-full max-w-4xl rounded-3xl border border-white/80 bg-white/90 p-6 shadow-xl shadow-amber-100 backdrop-blur sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-600">Onboarding required</p>
-            <h1 className="mt-3 text-3xl font-bold text-gray-950">Set up your cooking profile</h1>
-            <p className="mt-3 max-w-2xl text-gray-600">
-              Tell Bawarchee what your household eats so future recipes, inventory suggestions, and portions match your kitchen.
-            </p>
+          <div className="flex items-start gap-4">
+            <img src="/logo.png" alt="Bawarchee Logo" className="mt-1 h-12 w-12 shrink-0 object-contain" />
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-600">Onboarding required</p>
+              <h1 className="mt-3 text-3xl font-bold text-gray-950">Set up your cooking profile</h1>
+              <p className="mt-3 max-w-2xl text-gray-600">
+                Tell Bawarchee what your household eats so future recipes, inventory suggestions, and portions match your kitchen.
+              </p>
+            </div>
           </div>
           <LogoutButton />
         </div>

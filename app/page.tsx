@@ -3,7 +3,8 @@ import Link from 'next/link';
 export default function HomePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-6">
-      <section className="max-w-3xl rounded-3xl border border-white/70 bg-white/85 p-10 text-center shadow-xl shadow-amber-100 backdrop-blur">
+      <section className="flex flex-col items-center max-w-3xl rounded-3xl border border-white/70 bg-white/85 p-10 text-center shadow-xl shadow-amber-100 backdrop-blur">
+        <img src="/logo.png" alt="Bawarchee Logo" className="mb-6 h-24 w-24 object-contain" />
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-amber-600">Bawarchee</p>
         <h1 className="text-4xl font-bold tracking-tight text-gray-950 sm:text-6xl">
           Your intelligent pantry and recipe companion.
