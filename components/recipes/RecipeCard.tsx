@@ -2,35 +2,53 @@
 
 import { useState } from 'react';
 import type { RecipeSuggestion } from '@/lib/supabase/types';
+import { useDashboard } from '@/context/DashboardContext';
 
 type RecipeCardProps = {
   recipe: RecipeSuggestion;
 };
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
+  const { triggerInventoryRefresh } = useDashboard();
   const [status, setStatus] = useState<'suggested' | 'cooked'>(recipe.status);
   const [isUpdating, setIsUpdating] = useState(false);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<string | null>(null);
 
   async function handleMarkAsCooked() {
     if (status === 'cooked' || isUpdating) return;
     setIsUpdating(true);
+    setToast(null);
 
     try {
-      const response = await fetch('/api/recipes/cooked', {
+      const response = await fetch('/api/inventory/deduct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suggestion_id: recipe.id }),
+        body: JSON.stringify({
+          recipe_id: recipe.id,
+          session_id: recipe.session_id,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to mark recipe as cooked.');
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? 'Failed to deduct recipe ingredients.');
       }
 
+      const data = await response.json();
       setStatus('cooked');
+      
+      const totalCount = (data.deducted_items_count || 0) + (data.removed_items_count || 0);
+      setToast(`Inventory updated: ${totalCount} ingredients deducted! 🍳`);
+      
+      // Auto-hide toast after 4 seconds
+      setTimeout(() => setToast(null), 4000);
+
+      // Signal InventoryPanel to refresh the pantry items
+      triggerInventoryRefresh();
     } catch (error) {
       console.error(error);
-      alert('Error updating recipe status.');
+      setToast('Failed to update inventory. Please try again.');
     } finally {
       setIsUpdating(false);
     }
@@ -53,6 +71,22 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           : 'border-amber-100 bg-white hover:border-amber-200 hover:shadow-md'
       }`}
     >
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`absolute top-4 left-4 right-4 z-10 flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all duration-300 ${
+          toast.includes('Failed') ? 'bg-rose-600' : 'bg-emerald-600'
+        }`}>
+          <span>{toast}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="ml-2 text-sm font-bold text-white/80 hover:text-white"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Cooked Badge */}
       {isCooked && (
         <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm">

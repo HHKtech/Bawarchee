@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 8 of 9 modules completed + security hardening applied.
-- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module; Module 7 — Recipe Generation Module; Module 8 — AI Chat Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI, enable TOTP-based 2FA, use a responsive 3-panel dashboard, generate customized portion-scaled recipe suggestions using Gemini 2.5 Flash, and chat conversationally with Bawarchee to ask cooking questions, find substitutions, or dynamically update recipes by specifying missing ingredients.
-- **Pending modules:** Module 9 Consumption & Deduction.
+- **Overall roadmap:** 9 of 9 modules completed (Project Completed) + security hardening applied.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module; Module 7 — Recipe Generation Module; Module 8 — AI Chat Module; Module 9 — Consumption & Deduction Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI, enable TOTP-based 2FA, use a responsive 3-panel dashboard, generate customized portion-scaled recipe suggestions using Gemini 2.5 Flash, chat conversationally with Bawarchee to ask cooking questions, find substitutions, and deduct cooked recipe ingredients automatically from their pantry inventory (with auto-refresh syncing across panels).
+- **Pending modules:** None.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -114,6 +114,12 @@
 - Created `ChatMessage` UI component for distinct user and assistant chat bubble styling.
 - Overwrote `ChatPanel` placeholder to enable dynamic message rendering, typing loader animations, auto scroll to bottom, and automatic Panel 3 recipe syncing.
 
+### Module 9 — Consumption & Deduction Module
+- Extended `DashboardContext.tsx` with `inventoryRefreshTrigger` state and `triggerInventoryRefresh()` callback.
+- Updated `components/inventory/InventoryPanel.tsx` to automatically reload user inventory when `inventoryRefreshTrigger` updates.
+- Created `/api/inventory/deduct` API route to handle ingredient deductions. Case-insensitively maps ingredients, ignores exclusions, auto-deletes depleted items ($\le 0$), and marks suggestions as cooked.
+- Updated `components/recipes/RecipeCard.tsx` to call `/api/inventory/deduct` on "I cooked this" clicks, display interactive toast notifications, and trigger the state sync to reload Panel 1 in real-time.
+
 ## 3. Bug Fixes & Upgrades (Post-Module 5)
 
 ### Gemini SDK Migration
@@ -150,7 +156,7 @@
 - **Prerequisite:** TOTP must be enabled in Supabase Dashboard → Authentication → MFA before enrollment calls will succeed.
 
 ## 4. Current Focus
-- Module 8 AI Chat is complete. The next immediate focus is **Module 9: Consumption & Deduction Module**.
+- All 9 modules are complete. Bawarchee is fully functional and ready for production launch!
 
 ## 5. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -179,8 +185,8 @@
 - Recipe suggestions are persisted in `recipe_suggestions` and can be marked as `'cooked'` via `/api/recipes/cooked` endpoint.
 - AI Chat uses conversation history and profile context to provide helpful culinary responses. If users specify missing ingredients, the chat engine dynamically triggers database exclusion updates and recipe updates in context.
 - DB types in `lib/supabase/types.ts` are declared explicitly to avoid strict typecheck errors in Postgrest updates.
+- Ingredient deduction uses a case-insensitive check and automatically deletes pantry inventory records if they reach a quantity of 0 or below, keeping the user's pantry clean.
 
 ## 6. Next Immediate Steps
-- Begin **Module 9: Consumption & Deduction Module**.
-- Implement pantry deduction logic when the user clicks "I cooked this" on a recipe card, decrementing the quantities of used ingredients in `public.inventory_items`.
-- Support manual consumption or deletion of items from the inventory.
+- Deploy and start testing Bawarchee in your staging environment.
+- Run user acceptance testing (UAT) on receipt scanning, recipe scaling, AI cooking assistance, and automatic inventory deduction.

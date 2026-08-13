@@ -29,6 +29,7 @@ export function InventoryPanel() {
     setActiveSessionId,
     setGeneratedRecipes,
     setIsGeneratingRecipes,
+    inventoryRefreshTrigger,
   } = useDashboard();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
@@ -66,7 +67,7 @@ export function InventoryPanel() {
 
   useEffect(() => {
     loadInventory();
-  }, [loadInventory]);
+  }, [loadInventory, inventoryRefreshTrigger]);
 
   async function generateRecipes() {
     if (selectedItemIds.length === 0) return;
