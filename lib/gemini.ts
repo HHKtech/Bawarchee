@@ -185,6 +185,7 @@ Constraints:
 3. Scale all quantities to the household size of ${profile.household_size || 1} people.
 4. Keep the cooking steps matching a skill level of ${profile.cooking_skill || 'beginner'}.
 5. Do not include ingredients that are excluded.
+6. The JSON array must have strictly escaped characters. If you include line breaks or newlines in the steps or instructions, represent them strictly as escaped "\\n" and never as literal unescaped line breaks.
 `.trim();
 
   const result = await client.models.generateContent({
@@ -194,6 +195,9 @@ Constraints:
         text: prompt,
       },
     ],
+    config: {
+      responseMimeType: 'application/json',
+    }
   });
 
   const responseText = stripJsonFence(result.text || '');
@@ -224,3 +228,135 @@ Constraints:
     throw new Error('Failed to generate valid recipe suggestions from AI.');
   }
 }
+
+export type ChatHistoryMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export type ChatRefinementParams = {
+  history: ChatHistoryMessage[];
+  latestMessage: string;
+  recipes: any[];
+  profile: {
+    dietary_restrictions?: string[] | null;
+    allergies?: string | null;
+    cuisine_preference?: string[] | null;
+    cooking_skill?: string | null;
+    household_size?: number | null;
+  };
+  exclusions: string[];
+  selectedItems: Array<{ item_name: string; quantity: number; unit: string }>;
+  fullInventory?: Array<{ item_name: string; quantity: number; unit: string }> | null;
+};
+
+export type ChatRefinementResult = {
+  message: string;
+  newExclusions?: string[];
+  updatedRecipes?: GeneratedRecipe[];
+};
+
+export async function processChatRefinement(
+  params: ChatRefinementParams
+): Promise<ChatRefinementResult> {
+  const { history, latestMessage, recipes, profile, exclusions, selectedItems, fullInventory } = params;
+  const client = getGeminiClient();
+
+  const prompt = `
+You are Bawarchee, a personalized AI culinary assistant. You are helping a user in a live cooking chat session.
+
+Context Details:
+- CURRENT SUGGESTED RECIPES IN THIS SESSION:
+${JSON.stringify(recipes, null, 2)}
+
+- INGREDIENTS CURRENTLY SELECTED TO COOK WITH:
+${selectedItems.map((item) => `  * ${item.item_name}: ${item.quantity} ${item.unit}`).join('\n')}
+
+- OTHER AVAILABLE INGREDIENTS IN THE PANTRY:
+${fullInventory && fullInventory.length > 0
+  ? fullInventory.map((item) => `  * ${item.item_name}: ${item.quantity} ${item.unit}`).join('\n')
+  : '  * None'}
+
+- ACTIVE EXCLUSIONS (do not use these):
+${exclusions && exclusions.length > 0 ? exclusions.map(e => `  * ${e}`).join('\n') : '  * None'}
+
+- USER CULINARY PROFILE:
+  * Dietary Restrictions: ${profile.dietary_restrictions?.join(', ') || 'None'}
+  * Allergies: ${profile.allergies || 'None'}
+  * Cuisine Preferences: ${profile.cuisine_preference?.join(', ') || 'None'}
+  * Cooking Skill Level: ${profile.cooking_skill || 'beginner'}
+  * Household Size: ${profile.household_size || 1} people (Scale portions accordingly).
+
+Conversation History:
+${history.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
+USER'S LATEST MESSAGE: "${latestMessage}"
+
+Instructions:
+1. Determine if the user's latest message indicates that they do NOT have certain ingredients, run out of something, or want to exclude some ingredients from the recipes (e.g., "I don't have butter", "I run out of garlic", "Can we do it without onions?").
+2. IF AND ONLY IF they mention missing ingredients or exclusions:
+   - Identify the specific items to exclude.
+   - Return a JSON object with:
+     * "newExclusions": A string array containing the specific lowercase item names to exclude (e.g. ["butter", "garlic"]).
+     * "updatedRecipes": A newly generated array of 2 to 3 recipe suggestions that do NOT use these new exclusions (or the active exclusions), prioritizing their selected ingredients. Follow the same portion scaling and dietary restrictions.
+     * "message": A friendly chat message explaining that you've updated the recipes to accommodate their request.
+3. ELSE (if it's a general question, cooking substitution question, greeting, or clarifying question like "Can I use yogurt instead of cream?"):
+   - Return a JSON object containing ONLY:
+     * "message": A helpful, friendly, and detailed response answering their question as a culinary assistant.
+     * Do NOT include "newExclusions" or "updatedRecipes" in the JSON object (set them to null or omit them).
+
+Return ONLY valid JSON. Do NOT write any code blocks, markdown wrapper fences (like \`\`\`json), or conversational text. The response must parse directly as JSON.
+
+Constraints:
+- Inside the "message" field, never output raw literal newlines or line breaks. If you need to write paragraphs or line breaks, represent them strictly as escaped "\\n" characters inside the string value.
+`.trim();
+
+  const result = await client.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [
+      {
+        text: prompt,
+      },
+    ],
+    config: {
+      responseMimeType: 'application/json',
+    }
+  });
+
+  const responseText = stripJsonFence(result.text || '');
+
+  try {
+    const parsed = JSON.parse(responseText);
+    const refinementResult: ChatRefinementResult = {
+      message: String(parsed.message || ''),
+    };
+
+    if (parsed.newExclusions && Array.isArray(parsed.newExclusions)) {
+      refinementResult.newExclusions = parsed.newExclusions.map(String);
+    }
+
+    if (parsed.updatedRecipes && Array.isArray(parsed.updatedRecipes)) {
+      refinementResult.updatedRecipes = parsed.updatedRecipes.map((recipe: any) => ({
+        title: String(recipe.title || 'Tasty Recipe'),
+        ingredients_used: Array.isArray(recipe.ingredients_used)
+          ? recipe.ingredients_used.map((i: any) => ({
+              item_name: String(i.item_name || ''),
+              quantity: Number(i.quantity ?? 1),
+              unit: String(i.unit || 'pcs'),
+            }))
+          : [],
+        steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : [],
+        est_time_minutes: Number(recipe.est_time_minutes || 20),
+        est_calories: Number(recipe.est_calories || 300),
+        serves: Number(recipe.serves || profile.household_size || 1),
+      }));
+    }
+
+    return refinementResult;
+  } catch (error) {
+    console.error('Error parsing chat refinement response:', error);
+    return {
+      message: "I processed your request, but was unable to format it properly. Could you please rephrase?",
+    };
+  }
+}
+

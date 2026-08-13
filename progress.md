@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 7 of 9 modules completed + security hardening applied.
-- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module; Module 7 — Recipe Generation Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI, enable TOTP-based 2FA, use a responsive 3-panel dashboard, and generate customized, portion-scaled recipe suggestions using the Gemini 2.5 Flash API directly from selected pantry items.
-- **Pending modules:** Module 8 AI Chat, Module 9 Consumption & Deduction.
+- **Overall roadmap:** 8 of 9 modules completed + security hardening applied.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module; Module 7 — Recipe Generation Module; Module 8 — AI Chat Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI, enable TOTP-based 2FA, use a responsive 3-panel dashboard, generate customized portion-scaled recipe suggestions using Gemini 2.5 Flash, and chat conversationally with Bawarchee to ask cooking questions, find substitutions, or dynamically update recipes by specifying missing ingredients.
+- **Pending modules:** Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -105,6 +105,15 @@
 - Upgraded `DashboardContext` to manage `isGeneratingRecipes` loading states.
 - Replaced the Recipe Panel placeholder with a premium scrollable interface, loader animations, skeleton card pulses, and `RecipeCard` instances featuring ingredient checklists and step-by-step instructions.
 
+### Module 8 — AI Chat Module
+- Extended `supabase/schema.sql` with `public.chat_messages` table, including RLS policies, indexes, and grants.
+- Updated database typings in `lib/supabase/types.ts` to include `ChatMessage` and `chat_messages` table mappings.
+- Implemented `processChatRefinement()` in `lib/gemini.ts` to support conversational replies and dynamic recipe updates for stated missing ingredients.
+- Created `POST /api/chat/message` API endpoint to handle user inputs, update active exclusions, regenerate recipes in the DB, and return assistant messages.
+- Created `GET /api/chat/messages` API endpoint to load session conversation history and exclusions.
+- Created `ChatMessage` UI component for distinct user and assistant chat bubble styling.
+- Overwrote `ChatPanel` placeholder to enable dynamic message rendering, typing loader animations, auto scroll to bottom, and automatic Panel 3 recipe syncing.
+
 ## 3. Bug Fixes & Upgrades (Post-Module 5)
 
 ### Gemini SDK Migration
@@ -141,7 +150,7 @@
 - **Prerequisite:** TOTP must be enabled in Supabase Dashboard → Authentication → MFA before enrollment calls will succeed.
 
 ## 4. Current Focus
-- Module 7 Recipe Generation is complete. The next immediate focus is **Module 8: AI Chat Module**.
+- Module 8 AI Chat is complete. The next immediate focus is **Module 9: Consumption & Deduction Module**.
 
 ## 5. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -168,8 +177,10 @@
 - 2FA is fully optional per user; users without 2FA enrolled see no change in login flow. Supabase MFA TOTP must be enabled in the project dashboard for enrollment to work.
 - Recipe generation uses the modern `@google/genai` SDK and `gemini-2.5-flash` to construct customized recipes from checked pantry items, scaled to profile household sizes and excluding specified allergen or preference parameters.
 - Recipe suggestions are persisted in `recipe_suggestions` and can be marked as `'cooked'` via `/api/recipes/cooked` endpoint.
+- AI Chat uses conversation history and profile context to provide helpful culinary responses. If users specify missing ingredients, the chat engine dynamically triggers database exclusion updates and recipe updates in context.
+- DB types in `lib/supabase/types.ts` are declared explicitly to avoid strict typecheck errors in Postgrest updates.
 
 ## 6. Next Immediate Steps
-- Begin **Module 8: AI Chat Module**.
-- Build a conversational chef helper in Panel 2 that reads the active session ID, selected ingredients, and generated recipe lists.
-- Allow users to ask for recipe substitutions, detailed instructions, and step-by-step cooking assistance.
+- Begin **Module 9: Consumption & Deduction Module**.
+- Implement pantry deduction logic when the user clicks "I cooked this" on a recipe card, decrementing the quantities of used ingredients in `public.inventory_items`.
+- Support manual consumption or deletion of items from the inventory.
