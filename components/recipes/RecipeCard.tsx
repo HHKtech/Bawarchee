@@ -65,10 +65,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <article
-      className={`group relative flex flex-col rounded-3xl border p-6 transition-all duration-300 ${
+      className={`group relative flex flex-col rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${
         isCooked
           ? 'border-emerald-200 bg-emerald-50/40 shadow-sm'
-          : 'border-amber-100 bg-white hover:border-amber-200 hover:shadow-md'
+          : 'border-slate-200/80 bg-white hover:border-orange-200 hover:shadow-md'
       }`}
     >
       {/* Toast Notification */}
@@ -96,12 +96,12 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
 
       {/* Header */}
       <div>
-        <h3 className="pr-16 text-xl font-bold text-gray-950 transition-colors group-hover:text-amber-700">
+        <h3 className="pr-16 text-xl font-bold text-slate-900 transition-colors group-hover:text-orange-700">
           {recipe.title}
         </h3>
 
         {/* Quick info row */}
-        <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-gray-500">
+        <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-slate-500">
           {recipe.est_time_minutes && (
             <div className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-amber-800 font-semibold">
               <span>⏱️</span> {recipe.est_time_minutes} mins
@@ -120,11 +120,11 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         </div>
       </div>
 
-      <hr className="my-5 border-amber-50" />
+      <hr className="my-5 border-slate-100" />
 
       {/* Ingredients Checklist */}
       <div className="flex-1">
-        <h4 className="text-sm font-bold tracking-wide uppercase text-gray-400">Ingredients Checklist</h4>
+        <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Ingredients Checklist</h4>
         <ul className="mt-3 space-y-2">
           {recipe.ingredients_used.map((ingredient, idx) => {
             const isChecked = !!checkedIngredients[idx];
@@ -169,15 +169,15 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         </ul>
       </div>
 
-      <hr className="my-5 border-amber-50" />
+      <hr className="my-5 border-slate-100" />
 
       {/* Instructions / Steps */}
       <div className="mb-6">
-        <h4 className="text-sm font-bold tracking-wide uppercase text-gray-400">Instructions</h4>
+        <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Instructions</h4>
         <ol className="mt-3 space-y-3">
           {recipe.steps.map((step, idx) => (
             <li key={idx} className="flex gap-3 text-sm text-gray-700">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-xs font-bold text-orange-700">
                 {idx + 1}
               </span>
               <span className="leading-relaxed font-medium">{step}</span>
@@ -191,12 +191,12 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         type="button"
         onClick={handleMarkAsCooked}
         disabled={isCooked || isUpdating}
-        className={`w-full rounded-2xl py-3 text-center text-sm font-bold shadow-sm transition-all duration-300 ${
+        className={`w-full rounded-xl py-2.5 text-center text-sm font-bold shadow-md transition-all duration-300 ${
           isCooked
-            ? 'bg-emerald-100 text-emerald-800 cursor-default'
+            ? 'cursor-default bg-emerald-100 text-emerald-800 shadow-sm'
             : isUpdating
-            ? 'bg-amber-100 text-amber-800 cursor-wait'
-            : 'bg-amber-600 text-white hover:bg-amber-700 hover:shadow active:scale-95'
+            ? 'cursor-wait bg-amber-100 text-amber-800 shadow-sm'
+            : 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700 hover:shadow-lg active:scale-95'
         }`}
       >
         {isCooked ? 'Cooked! 🎉' : isUpdating ? 'Saving...' : 'I cooked this! 🍳'}
