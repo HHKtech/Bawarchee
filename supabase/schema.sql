@@ -276,3 +276,56 @@ create policy "Users can delete their own receipt images"
     bucket_id = 'receipts'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+
+-- Bawarchee Module 7: Recipe Generation Module
+
+create table if not exists public.recipe_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  selected_inventory_item_ids uuid[] default '{}'::uuid[],
+  exclusions text[] default '{}'::text[],
+  created_at timestamptz not null default timezone('utc'::text, now())
+);
+
+create table if not exists public.recipe_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.recipe_sessions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  title text not null,
+  ingredients_used jsonb not null, -- format: Array<{ item_name: string, quantity: number, unit: string }>
+  steps text[] not null,
+  est_time_minutes integer,
+  est_calories integer,
+  serves integer,
+  status text not null default 'suggested' check (status in ('suggested', 'cooked')),
+  created_at timestamptz not null default timezone('utc'::text, now())
+);
+
+alter table public.recipe_sessions enable row level security;
+alter table public.recipe_suggestions enable row level security;
+
+drop policy if exists "Users can manage their own recipe sessions" on public.recipe_sessions;
+create policy "Users can manage their own recipe sessions"
+  on public.recipe_sessions for all
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can manage their own recipe suggestions" on public.recipe_suggestions;
+create policy "Users can manage their own recipe suggestions"
+  on public.recipe_suggestions for all
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists recipe_sessions_user_id_idx on public.recipe_sessions (user_id);
+create index if not exists recipe_suggestions_session_id_idx on public.recipe_suggestions (session_id);
+create index if not exists recipe_suggestions_user_id_idx on public.recipe_suggestions (user_id);
+
+grant all privileges on table public.recipe_sessions to authenticated;
+grant all privileges on table public.recipe_suggestions to authenticated;
+grant all privileges on table public.recipe_sessions to service_role;
+grant all privileges on table public.recipe_suggestions to service_role;
+
+

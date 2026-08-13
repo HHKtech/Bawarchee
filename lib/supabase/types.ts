@@ -17,7 +17,7 @@ export type CatalogItem = {
 };
 
 export type InventoryAddedVia = 'search' | 'receipt' | 'manual';
-export type ReceiptScanStatus = 'pending' | 'confirmed' | 'discarded';
+export type ReceiptScanStatus = 'pending' | 'confirmed' | 'discarded' | 'failed';
 
 export type InventoryItem = {
   id: string;
@@ -44,10 +44,13 @@ export type ReceiptScanItem = {
   scan_id: string;
   raw_text: string;
   matched_catalog_item_id: string | null;
-  matched_item_name: string | null;
+  suggested_name?: string | null;
+  matched_item_name?: string | null;
+  category?: string | null;
   quantity: number;
   unit: string;
-  confirmed: boolean;
+  confidence?: number | null;
+  confirmed?: boolean | null;
 };
 
 export type Profile = {
@@ -69,26 +72,32 @@ export type FamilyMember = {
   created_at: string;
 };
 
-export type ReceiptScanStatus = 'pending' | 'confirmed' | 'failed';
-
-export type ReceiptScan = {
+export type RecipeSession = {
   id: string;
   user_id: string;
-  image_url: string;
-  status: ReceiptScanStatus;
+  selected_inventory_item_ids: string[];
+  exclusions: string[];
   created_at: string;
 };
 
-export type ReceiptScanItem = {
-  id: string;
-  scan_id: string;
-  raw_text: string;
-  matched_catalog_item_id: string | null;
-  suggested_name: string;
-  category: string;
+export type RecipeSuggestionIngredient = {
+  item_name: string;
   quantity: number;
   unit: string;
-  confidence: number;
+};
+
+export type RecipeSuggestion = {
+  id: string;
+  session_id: string;
+  user_id: string;
+  title: string;
+  ingredients_used: RecipeSuggestionIngredient[];
+  steps: string[];
+  est_time_minutes: number | null;
+  est_calories: number | null;
+  serves: number | null;
+  status: 'suggested' | 'cooked';
+  created_at: string;
 };
 
 export type GenericRelationship = {
@@ -205,57 +214,112 @@ export type Database = {
         Relationships: GenericRelationship[];
       };
       receipt_scan_items: {
-        Row: ReceiptScanItem;
+        Row: {
+          id: string;
+          scan_id: string;
+          raw_text: string;
+          matched_catalog_item_id: string | null;
+          suggested_name?: string | null;
+          matched_item_name?: string | null;
+          category?: string | null;
+          quantity: number;
+          unit: string;
+          confidence?: number | null;
+          confirmed?: boolean | null;
+        };
         Insert: {
           id?: string;
           scan_id: string;
           raw_text: string;
           matched_catalog_item_id?: string | null;
-          suggested_name: string;
-          category: string;
-          quantity: number;
-          unit: string;
-          confidence?: number;
+          suggested_name?: string | null;
+          matched_item_name?: string | null;
+          category?: string | null;
+          quantity?: number;
+          unit?: string;
+          confidence?: number | null;
+          confirmed?: boolean | null;
         };
         Update: {
           id?: string;
           scan_id?: string;
           raw_text?: string;
           matched_catalog_item_id?: string | null;
-          suggested_name?: string;
-          category?: string;
+          suggested_name?: string | null;
+          matched_item_name?: string | null;
+          category?: string | null;
           quantity?: number;
           unit?: string;
-          confidence?: number;
+          confidence?: number | null;
+          confirmed?: boolean | null;
         };
         Relationships: GenericRelationship[];
       };
-      receipt_scans: {
-        Row: ReceiptScan;
+      recipe_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          selected_inventory_item_ids: string[];
+          exclusions: string[];
+          created_at: string;
+        };
         Insert: {
           id?: string;
           user_id?: string;
-          image_url: string;
-          status?: ReceiptScanStatus;
+          selected_inventory_item_ids?: string[];
+          exclusions?: string[];
           created_at?: string;
         };
-        Update: Partial<Omit<ReceiptScan, 'id' | 'user_id' | 'created_at'>>;
-        Relationships: [];
+        Update: {
+          id?: string;
+          user_id?: string;
+          selected_inventory_item_ids?: string[];
+          exclusions?: string[];
+          created_at?: string;
+        };
+        Relationships: GenericRelationship[];
       };
-      receipt_scan_items: {
-        Row: ReceiptScanItem;
+      recipe_suggestions: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string;
+          title: string;
+          ingredients_used: Json;
+          steps: string[];
+          est_time_minutes: number | null;
+          est_calories: number | null;
+          serves: number | null;
+          status: 'suggested' | 'cooked';
+          created_at: string;
+        };
         Insert: {
           id?: string;
-          scan_id: string;
-          raw_text: string;
-          matched_catalog_item_id?: string | null;
-          matched_item_name?: string | null;
-          quantity?: number;
-          unit?: string;
-          confirmed?: boolean;
+          session_id: string;
+          user_id?: string;
+          title: string;
+          ingredients_used: Json;
+          steps: string[];
+          est_time_minutes?: number | null;
+          est_calories?: number | null;
+          serves?: number | null;
+          status?: 'suggested' | 'cooked';
+          created_at?: string;
         };
-        Update: Partial<Omit<ReceiptScanItem, 'id' | 'scan_id'>>;
-        Relationships: [];
+        Update: {
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+          title?: string;
+          ingredients_used?: Json;
+          steps?: string[];
+          est_time_minutes?: number | null;
+          est_calories?: number | null;
+          serves?: number | null;
+          status?: 'suggested' | 'cooked';
+          created_at?: string;
+        };
+        Relationships: GenericRelationship[];
       };
     };
     Views: Record<string, any>;

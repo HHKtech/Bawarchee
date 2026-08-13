@@ -21,7 +21,15 @@ function groupInventoryItems(items: InventoryItem[]): GroupedInventory {
 }
 
 export function InventoryPanel() {
-  const { selectedItemIds, toggleSelectItem, selectAllItems, clearSelections, setActiveSessionId, setGeneratedRecipes } = useDashboard();
+  const {
+    selectedItemIds,
+    toggleSelectItem,
+    selectAllItems,
+    clearSelections,
+    setActiveSessionId,
+    setGeneratedRecipes,
+    setIsGeneratingRecipes,
+  } = useDashboard();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,10 +68,32 @@ export function InventoryPanel() {
     loadInventory();
   }, [loadInventory]);
 
-  function generateRecipes() {
-    const sessionId = `recipe-session-${Date.now()}`;
-    setActiveSessionId(sessionId);
+  async function generateRecipes() {
+    if (selectedItemIds.length === 0) return;
+    setIsGeneratingRecipes(true);
+    setError(null);
     setGeneratedRecipes([]);
+
+    try {
+      const response = await fetch('/api/recipes/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_item_ids: selectedItemIds }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error ?? 'Failed to generate recipes.');
+      }
+
+      const payload = await response.json();
+      setActiveSessionId(payload.session_id);
+      setGeneratedRecipes(payload.recipes);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsGeneratingRecipes(false);
+    }
   }
 
   async function updateQuantity(item: InventoryItem) {

@@ -2,10 +2,10 @@
 
 ## 1. Current Project Status
 - **Project:** Bawarchee (fresh-start Next.js 14 App Router app)
-- **Overall roadmap:** 6 of 9 modules completed + security hardening applied.
-- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module.
-- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, search/select public grocery catalog items, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI to automatically extract and confirm pantry additions, optionally enable TOTP-based two-factor authentication, and use a responsive 3-panel dashboard shell with shared inventory selection/session state for upcoming recipe and chat flows.
-- **Pending modules:** Module 7 Recipe Generation, Module 8 AI Chat, Module 9 Consumption & Deduction.
+- **Overall roadmap:** 7 of 9 modules completed + security hardening applied.
+- **Completed modules:** Module 1 — Auth Module; Module 2 — Profile & Family Setup Module; Module 3 — Item Catalog & Search Module; Module 4 — Inventory Module; Module 5 — Receipt Scanner Module; Module 6 — Dashboard Layout Module; Module 7 — Recipe Generation Module.
+- **Current status:** Authenticated users can complete onboarding, manage cooking preferences and household setup data, maintain a user-scoped pantry inventory, scan grocery receipts with Gemini AI, enable TOTP-based 2FA, use a responsive 3-panel dashboard, and generate customized, portion-scaled recipe suggestions using the Gemini 2.5 Flash API directly from selected pantry items.
+- **Pending modules:** Module 8 AI Chat, Module 9 Consumption & Deduction.
 
 ## 2. Completed Modules & Sub-tasks
 ### Module 1 — Auth Module
@@ -96,6 +96,15 @@
   - `components/recipes/RecipePanel.tsx` for Module 7 recipe generation results.
 - Updated `components/inventory/InventoryPanel.tsx` to use `DashboardContext` for row checkbox state, select-all/clear controls, and a sticky selection banner with selected count and "Generate Recipes ✨" action.
 
+### Module 7 — Recipe Generation Module
+- Extended `supabase/schema.sql` with `public.recipe_sessions` and `public.recipe_suggestions` tables, including RLS policies, user indexes, and explicit table privilege grants for `authenticated` and `service_role` database roles.
+- Updated database typings in `lib/supabase/types.ts` to represent sessions and suggestions explicitly.
+- Migrated `lib/gemini.ts` to the modern `@google/genai` SDK and implemented `generateRecipesFromInventory()` targeting `gemini-2.5-flash`.
+- Created authenticated `POST /api/recipes/generate` endpoint to build sessions and fetch AI suggestions.
+- Created `POST /api/recipes/cooked` endpoint to confirm and mark a suggested recipe as cooked in the database.
+- Upgraded `DashboardContext` to manage `isGeneratingRecipes` loading states.
+- Replaced the Recipe Panel placeholder with a premium scrollable interface, loader animations, skeleton card pulses, and `RecipeCard` instances featuring ingredient checklists and step-by-step instructions.
+
 ## 3. Bug Fixes & Upgrades (Post-Module 5)
 
 ### Gemini SDK Migration
@@ -132,7 +141,7 @@
 - **Prerequisite:** TOTP must be enabled in Supabase Dashboard → Authentication → MFA before enrollment calls will succeed.
 
 ## 4. Current Focus
-- Module 6 Dashboard Layout is complete. The next immediate focus is **Module 7: Recipe Generation Module**.
+- Module 7 Recipe Generation is complete. The next immediate focus is **Module 8: AI Chat Module**.
 
 ## 5. Key Technical Decisions / Env Vars / Architecture Notes
 - Use **Next.js 14 App Router + TypeScript + Tailwind CSS**.
@@ -157,8 +166,10 @@
 - Inventory add workflows reuse `CatalogSearch` and `/api/catalog`; exact `item_name` + `unit` matches merge quantities instead of creating duplicate rows.
 - Receipt scanner parses images via Gemini (`@google/genai` SDK, `gemini-2.5-flash`), fuzzy-matches line items against catalog, and merges confirmed items into `public.inventory_items`.
 - 2FA is fully optional per user; users without 2FA enrolled see no change in login flow. Supabase MFA TOTP must be enabled in the project dashboard for enrollment to work.
+- Recipe generation uses the modern `@google/genai` SDK and `gemini-2.5-flash` to construct customized recipes from checked pantry items, scaled to profile household sizes and excluding specified allergen or preference parameters.
+- Recipe suggestions are persisted in `recipe_suggestions` and can be marked as `'cooked'` via `/api/recipes/cooked` endpoint.
 
 ## 6. Next Immediate Steps
-- Begin **Module 7: Recipe Generation Module**.
-- Implement recipe generation using selected inventory item IDs from `DashboardContext`.
-- Persist and display generated recipe sessions in the right-side Recipe Panel, then prepare the shared session data for Module 8 AI Chat.
+- Begin **Module 8: AI Chat Module**.
+- Build a conversational chef helper in Panel 2 that reads the active session ID, selected ingredients, and generated recipe lists.
+- Allow users to ask for recipe substitutions, detailed instructions, and step-by-step cooking assistance.

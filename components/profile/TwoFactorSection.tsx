@@ -239,7 +239,7 @@ export function TwoFactorSection() {
       {status === 'enabled' && (
         <div className="mt-5">
           <p className="text-sm text-gray-600">
-            Your account is protected with two-factor authentication. You'll be asked for a code each time you sign in.
+            Your account is protected with two-factor authentication. You&apos;ll be asked for a code each time you sign in.
           </p>
           <button
             onClick={disableTwoFactor}

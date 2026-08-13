@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -6,6 +6,28 @@ export type ExtractedReceiptItem = {
   raw_text: string;
   quantity: number;
   unit: string;
+};
+
+export type RecipeGenerationParams = {
+  selectedItems: Array<{ item_name: string; quantity: number; unit: string }>;
+  fullInventory?: Array<{ item_name: string; quantity: number; unit: string }> | null;
+  profile: {
+    dietary_restrictions?: string[] | null;
+    allergies?: string | null;
+    cuisine_preference?: string[] | null;
+    cooking_skill?: string | null;
+    household_size?: number | null;
+  };
+  exclusions?: string[];
+};
+
+export type GeneratedRecipe = {
+  title: string;
+  ingredients_used: Array<{ item_name: string; quantity: number; unit: string }>;
+  steps: string[];
+  est_time_minutes: number;
+  est_calories: number;
+  serves: number;
 };
 
 const RECEIPT_EXTRACTION_PROMPT = `
@@ -29,7 +51,7 @@ function getGeminiClient() {
     throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is required for receipt extraction.');
   }
 
-  return new GoogleGenerativeAI(apiKey);
+  return new GoogleGenAI({ apiKey });
 }
 
 function stripJsonFence(text: string) {
@@ -77,18 +99,23 @@ export async function extractItemsFromReceipt(
     throw new Error('Receipt extraction requires an image MIME type.');
   }
 
-  const model = getGeminiClient().getGenerativeModel({ model: GEMINI_MODEL });
-  const result = await model.generateContent([
-    RECEIPT_EXTRACTION_PROMPT,
-    {
-      inlineData: {
-        data: imageBuffer.toString('base64'),
-        mimeType,
+  const client = getGeminiClient();
+  const result = await client.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [
+      {
+        inlineData: {
+          data: imageBuffer.toString('base64'),
+          mimeType,
+        },
       },
-    },
-  ]);
+      {
+        text: RECEIPT_EXTRACTION_PROMPT,
+      },
+    ],
+  });
 
-  const responseText = stripJsonFence(result.response.text());
+  const responseText = stripJsonFence(result.text || '');
 
   try {
     return coerceReceiptItems(JSON.parse(responseText));
@@ -98,5 +125,102 @@ export async function extractItemsFromReceipt(
         error instanceof Error ? error.message : 'Unknown error'
       }`,
     );
+  }
+}
+
+export async function generateRecipesFromInventory(
+  params: RecipeGenerationParams
+): Promise<GeneratedRecipe[]> {
+  const { selectedItems, fullInventory, profile, exclusions } = params;
+
+  const client = getGeminiClient();
+
+  const prompt = `
+You are Bawarchee, a personalized AI culinary assistant. Your task is to generate 2 to 3 detailed recipe suggestions customized to the user's preferences, scaled to their household size, and utilizing their available ingredients.
+
+Input Details:
+- SELECTED INGREDIENTS (ingredients the user wants to cook with right now):
+${selectedItems.map((item) => `  * ${item.item_name}: ${item.quantity} ${item.unit}`).join('\n')}
+
+- OTHER AVAILABLE INGREDIENTS IN THE PANTRY (you can use these as minor additions or staples like oil, salt, spices, or secondary ingredients, but prioritize using the selected ingredients above):
+${fullInventory && fullInventory.length > 0
+  ? fullInventory.map((item) => `  * ${item.item_name}: ${item.quantity} ${item.unit}`).join('\n')
+  : '  * None'}
+
+- USER DIETARY PROFILE:
+  * Dietary Restrictions: ${profile.dietary_restrictions?.join(', ') || 'None'}
+  * Allergies: ${profile.allergies || 'None'}
+  * Cuisine Preferences: ${profile.cuisine_preference?.join(', ') || 'None'}
+  * Cooking Skill Level: ${profile.cooking_skill || 'beginner'}
+  * Household Size: ${profile.household_size || 1} people (Scale all recipe ingredients and portion sizes to serve exactly this number of people).
+
+- INGREDIENT EXCLUSIONS (Do NOT use these ingredients under any circumstance):
+${exclusions && exclusions.length > 0 ? exclusions.map(e => `  * ${e}`).join('\n') : '  * None'}
+
+Output Requirements:
+Return ONLY a valid JSON array of recipe suggestions matching the schema below. Do NOT write any code blocks, markdown wrapper fences (like \`\`\`json), or conversational text. The response must parse directly as JSON.
+
+Each recipe object in the JSON array must have this structure:
+{
+  "title": "A descriptive, appetizing recipe name",
+  "ingredients_used": [
+    {
+      "item_name": "name of ingredient",
+      "quantity": 2,
+      "unit": "pcs/g/ml/etc"
+    }
+  ],
+  "steps": [
+    "Step 1 instruction.",
+    "Step 2 instruction."
+  ],
+  "est_time_minutes": 35,
+  "est_calories": 520,
+  "serves": ${profile.household_size || 1}
+}
+
+Constraints:
+1. Ensure the recipes are safe (no allergens listed above).
+2. Follow dietary restrictions (e.g., if vegetarian, do not suggest meat/fish).
+3. Scale all quantities to the household size of ${profile.household_size || 1} people.
+4. Keep the cooking steps matching a skill level of ${profile.cooking_skill || 'beginner'}.
+5. Do not include ingredients that are excluded.
+`.trim();
+
+  const result = await client.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [
+      {
+        text: prompt,
+      },
+    ],
+  });
+
+  const responseText = stripJsonFence(result.text || '');
+
+  try {
+    const parsed = JSON.parse(responseText);
+    if (!Array.isArray(parsed)) {
+      throw new Error('Gemini response is not an array.');
+    }
+    return parsed.map((recipe: any) => {
+      return {
+        title: String(recipe.title || 'Tasty Recipe'),
+        ingredients_used: Array.isArray(recipe.ingredients_used)
+          ? recipe.ingredients_used.map((i: any) => ({
+              item_name: String(i.item_name || ''),
+              quantity: Number(i.quantity ?? 1),
+              unit: String(i.unit || 'pcs'),
+            }))
+          : [],
+        steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : [],
+        est_time_minutes: Number(recipe.est_time_minutes || 20),
+        est_calories: Number(recipe.est_calories || 300),
+        serves: Number(recipe.serves || profile.household_size || 1),
+      };
+    }) satisfies GeneratedRecipe[];
+  } catch (error) {
+    console.error('Error parsing recipe generation response:', error);
+    throw new Error('Failed to generate valid recipe suggestions from AI.');
   }
 }
