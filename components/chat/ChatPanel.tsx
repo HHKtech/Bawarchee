@@ -128,34 +128,36 @@ export function ChatPanel() {
   // Render placeholder if no active session
   if (!activeSessionId) {
     return (
-      <section className="flex h-full min-h-[520px] flex-col rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
-        <div className="border-b border-amber-100 pb-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">Module 8</p>
-          <h2 className="mt-1 text-2xl font-bold text-gray-950 font-sans">AI Chat</h2>
-          <p className="mt-2 text-sm text-gray-600">
+      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="flex-shrink-0 border-b border-slate-100 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Module 8</p>
+          <h2 className="mt-1 text-2xl font-bold text-slate-900 font-sans">AI Chat</h2>
+          <p className="mt-2 text-sm text-slate-600">
             A guided cooking assistant will use your selected pantry items and active recipe session here.
           </p>
         </div>
 
-        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-3xl border border-dashed border-amber-200 bg-amber-50/60 p-8 text-center">
-          <div className="text-4xl animate-pulse">💬</div>
-          <h3 className="mt-4 text-lg font-bold text-gray-950">Chat is offline</h3>
-          <p className="mt-2 max-w-sm text-sm text-gray-600">
-            Please select pantry ingredients and click **Generate Recipes** to start a cooking session and unlock conversational refinements.
-          </p>
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="flex min-h-full flex-col items-center justify-center rounded-3xl border border-dashed border-orange-200 bg-orange-50/60 p-8 text-center">
+            <div className="text-4xl animate-pulse">💬</div>
+            <h3 className="mt-4 text-lg font-bold text-slate-900">Chat is offline</h3>
+            <p className="mt-2 max-w-sm text-sm text-slate-600">
+              Please select pantry ingredients and click **Generate Recipes** to start a cooking session and unlock conversational refinements.
+            </p>
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="flex h-[600px] flex-col rounded-3xl border border-amber-100 bg-white shadow-sm overflow-hidden">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
       {/* Panel Header */}
-      <div className="border-b border-amber-100 bg-white px-6 py-5">
+      <div className="flex-shrink-0 border-b border-slate-100 bg-white p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">Module 8</p>
-            <h2 className="mt-0.5 text-xl font-bold text-gray-950 font-sans">Bawarchee Assistant</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Module 8</p>
+            <h2 className="mt-0.5 text-xl font-bold text-slate-900 font-sans">Bawarchee Assistant</h2>
           </div>
           <div className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
@@ -177,11 +179,11 @@ export function ChatPanel() {
       </div>
 
       {/* Messages Feed */}
-      <div className="flex-1 overflow-y-auto bg-gray-50/50 p-6 space-y-4">
+      <div className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/80 p-4">
         {isLoadingHistory ? (
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center gap-2">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-600 border-t-transparent" />
               <span className="text-xs font-bold text-gray-400">Loading chat history...</span>
             </div>
           </div>
@@ -200,14 +202,14 @@ export function ChatPanel() {
         {/* Typing indicator */}
         {isSending && (
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-sm font-bold shadow-sm animate-bounce">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold shadow-sm animate-bounce">
               👨‍🍳
             </div>
             <div className="rounded-2xl rounded-tl-none border border-gray-100 bg-white px-4 py-3 shadow-sm">
               <div className="flex items-center gap-1">
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-600 [animation-delay:-0.3s]" />
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-600 [animation-delay:-0.15s]" />
-                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-600" />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-600 [animation-delay:-0.3s]" />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-600 [animation-delay:-0.15s]" />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-600" />
               </div>
             </div>
           </div>
@@ -223,21 +225,21 @@ export function ChatPanel() {
       </div>
 
       {/* Input Message Form */}
-      <form onSubmit={handleSendMessage} className="border-t border-amber-100 bg-white p-4">
-        <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-white px-3 py-1.5 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10">
+      <form onSubmit={handleSendMessage} className="flex-shrink-0 border-t border-slate-100 bg-white p-4">
+        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 transition focus-within:border-orange-500 focus-within:ring-4 focus-within:ring-orange-500/10">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending}
             placeholder="Ask about substitutions or state missing ingredients..."
-            className="flex-1 bg-transparent py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400"
+            className="flex-1 bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
             id="chat-message-input"
           />
           <button
             type="submit"
             disabled={!input.trim() || isSending}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-gray-200"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-slate-200"
             id="chat-send-btn"
           >
             <svg

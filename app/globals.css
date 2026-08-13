@@ -10,12 +10,44 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #f8fafc;
+}
+
 body {
   min-height: 100vh;
-  background: #fff8eb;
-  color: #1f2937;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 ::selection {
-  background: #fde68a;
+  background: #fed7aa;
+  color: #7c2d12;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #fed7aa transparent;
+  scrollbar-gutter: stable;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #fed7aa;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #fdba74;
+  background-clip: content-box;
 }

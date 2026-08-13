@@ -4,10 +4,12 @@ import { DashboardProvider } from '@/context/DashboardContext';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <DashboardProvider>
-      <main className="min-h-screen bg-amber-50">
-        <DashboardHeader />
-        {children}
-      </main>
+      <div className="flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-900">
+        <DashboardHeader className="flex-shrink-0" />
+        <main className="flex-1 overflow-hidden p-4 lg:p-6">
+          {children}
+        </main>
+      </div>
     </DashboardProvider>
   );
 }

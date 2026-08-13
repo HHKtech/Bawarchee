@@ -571,7 +571,7 @@ export function ReceiptScanModal({ isOpen, onClose, onItemsAdded }: ReceiptScanM
         )}
 
         {/* Body (scrollable) */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="custom-scrollbar flex-1 overflow-y-auto px-6 py-6">
           {error && step === 'upload' && (
             <p className="mb-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</p>
           )}

@@ -21,8 +21,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div
         className={`flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-xl text-sm font-bold shadow-sm transition duration-300 ${
           isUser
-            ? 'bg-amber-600 text-white'
-            : 'border border-amber-200 bg-amber-50 text-amber-700'
+            ? 'bg-orange-600 text-white'
+            : 'border border-orange-200 bg-orange-50 text-orange-700'
         }`}
       >
         {isUser ? '👤' : '👨‍🍳'}
@@ -34,15 +34,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <div
           className={`rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed shadow-sm transition-all duration-300 ${
             isUser
-              ? 'rounded-tr-none bg-gradient-to-br from-amber-500 to-orange-600 text-white'
-              : 'rounded-tl-none border border-gray-100 bg-white text-gray-800'
+              ? 'rounded-br-sm bg-orange-600 text-white shadow-sm'
+              : 'rounded-bl-sm border border-slate-200/60 bg-slate-100 text-slate-800'
           }`}
         >
           {message.content}
         </div>
 
         {/* Timestamp */}
-        <span className="px-1 text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+        <span className="px-1 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
           {timeString}
         </span>
       </div>

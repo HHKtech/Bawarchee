@@ -102,14 +102,14 @@ export function AddItemModal({ isOpen, onClose, onItemsAdded }: AddItemModalProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 px-4 py-8" role="dialog" aria-modal="true" aria-label="Add inventory items">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+      <div className="custom-scrollbar max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">Inventory</p>
-            <h2 className="mt-1 text-2xl font-bold text-gray-950">Add grocery items</h2>
-            <p className="mt-2 text-sm text-gray-600">Search the catalog, select ingredients, then enter how much you have on hand.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-600">Inventory</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">Add grocery items</h2>
+            <p className="mt-2 text-sm text-slate-600">Search the catalog, select ingredients, then enter how much you have on hand.</p>
           </div>
-          <button type="button" onClick={resetAndClose} className="rounded-full border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50">
+          <button type="button" onClick={resetAndClose} className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
             Close
           </button>
         </div>
@@ -117,23 +117,23 @@ export function AddItemModal({ isOpen, onClose, onItemsAdded }: AddItemModalProp
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <CatalogSearch selectedItems={selectedItems} onSelectedItemsChange={setSelectedItems} label="Find ingredients to add" limit={30} />
 
-          <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
-            <h3 className="font-bold text-gray-950">Quantities</h3>
+          <div className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
+            <h3 className="font-bold text-slate-900">Quantities</h3>
             {selectedItems.length === 0 ? (
-              <p className="mt-3 text-sm text-gray-500">Selected catalog items will appear here with quantity fields.</p>
+              <p className="mt-3 text-sm text-slate-500">Selected catalog items will appear here with quantity fields.</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {selectedItems.map((item) => (
-                  <div key={item.name} className="rounded-2xl border border-white bg-white p-4 shadow-sm">
+                  <div key={item.name} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold capitalize text-gray-950">{item.name}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{item.category}</p>
+                        <p className="font-semibold capitalize text-slate-900">{item.name}</p>
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{item.category}</p>
                       </div>
                       <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">{item.default_unit}</span>
                     </div>
                     <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2">
-                      <label className="text-xs font-semibold text-gray-600">
+                      <label className="text-xs font-semibold text-slate-600">
                         Quantity
                         <input
                           type="number"
@@ -141,15 +141,15 @@ export function AddItemModal({ isOpen, onClose, onItemsAdded }: AddItemModalProp
                           step="0.01"
                           value={drafts[item.name]?.quantity ?? '1'}
                           onChange={(event) => updateDraft(item.name, { quantity: event.target.value })}
-                          className="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2 text-sm text-gray-950 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                         />
                       </label>
-                      <label className="text-xs font-semibold text-gray-600">
+                      <label className="text-xs font-semibold text-slate-600">
                         Unit
                         <input
                           value={drafts[item.name]?.unit ?? item.default_unit}
                           onChange={(event) => updateDraft(item.name, { unit: event.target.value })}
-                          className="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2 text-sm text-gray-950 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                         />
                       </label>
                     </div>
@@ -164,7 +164,7 @@ export function AddItemModal({ isOpen, onClose, onItemsAdded }: AddItemModalProp
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit || isSubmitting}
-              className="mt-5 w-full rounded-full bg-amber-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:from-orange-700 hover:to-amber-700 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300"
             >
               {isSubmitting ? 'Adding items...' : 'Add selected items'}
             </button>

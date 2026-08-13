@@ -81,7 +81,7 @@ export function CatalogSearch({
   return (
     <div className="space-y-5">
       <div>
-        <label htmlFor="catalog-search" className="text-sm font-semibold text-gray-950">
+        <label htmlFor="catalog-search" className="text-sm font-semibold text-slate-900">
           {label}
         </label>
         <input
@@ -89,7 +89,7 @@ export function CatalogSearch({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className="mt-2 w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
         />
       </div>
 
@@ -98,7 +98,7 @@ export function CatalogSearch({
           type="button"
           onClick={() => setCategory('')}
           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-            category === '' ? 'border-amber-500 bg-amber-500 text-white' : 'border-amber-200 bg-white text-amber-800 hover:bg-amber-50'
+            category === '' ? 'border-orange-600 bg-orange-600 text-white' : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'
           }`}
         >
           All
@@ -110,8 +110,8 @@ export function CatalogSearch({
             onClick={() => setCategory(catalogCategory)}
             className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
               category === catalogCategory
-                ? 'border-amber-500 bg-amber-500 text-white'
-                : 'border-amber-200 bg-white text-amber-800 hover:bg-amber-50'
+                ? 'border-orange-600 bg-orange-600 text-white'
+                : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'
             }`}
           >
             {catalogCategory}
@@ -120,15 +120,15 @@ export function CatalogSearch({
       </div>
 
       {selectedItems.length > 0 ? (
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-          <p className="text-sm font-semibold text-amber-950">Selected items</p>
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
+          <p className="text-sm font-semibold text-slate-900">Selected items</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {selectedItems.map((item) => (
               <button
                 key={item.name}
                 type="button"
                 onClick={() => toggleItem(item)}
-                className="rounded-full bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700"
+                className="rounded-full bg-orange-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
                 aria-label={`Remove ${item.name}`}
               >
                 {item.name} ×
@@ -138,10 +138,10 @@ export function CatalogSearch({
         </div>
       ) : null}
 
-      <div className="min-h-48 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-        <div className="mb-2 flex items-center justify-between px-1 text-sm text-gray-500">
+      <div className="custom-scrollbar max-h-[28rem] min-h-48 overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
+        <div className="mb-2 flex items-center justify-between px-1 text-sm text-slate-500">
           <span>{isLoading ? 'Searching...' : `${total} item${total === 1 ? '' : 's'} found`}</span>
-          {category ? <span className="font-medium text-amber-700">{category}</span> : null}
+          {category ? <span className="font-medium text-orange-700">{category}</span> : null}
         </div>
 
         {error ? <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
@@ -155,13 +155,13 @@ export function CatalogSearch({
                 type="button"
                 onClick={() => toggleItem(item)}
                 className={`rounded-2xl border p-4 text-left transition ${
-                  active ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-gray-100 bg-white hover:border-amber-200 hover:bg-amber-50/60'
+                  active ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-100 bg-white hover:border-orange-200 hover:bg-orange-50/60'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold capitalize text-gray-950">{item.name}</p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Unit: {item.default_unit}</p>
+                    <p className="font-semibold capitalize text-slate-900">{item.name}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Unit: {item.default_unit}</p>
                   </div>
                   <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">{item.category}</span>
                 </div>
@@ -170,7 +170,7 @@ export function CatalogSearch({
           })}
         </div>
 
-        {!isLoading && items.length === 0 ? <p className="p-6 text-center text-sm text-gray-500">No catalog items matched your search.</p> : null}
+        {!isLoading && items.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">No catalog items matched your search.</p> : null}
       </div>
     </div>
   );
